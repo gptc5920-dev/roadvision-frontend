@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSession } from "../app/SessionContext";
 import { Brand } from "../components/brand/Brand";
 import { Icon } from "../components/icons/Icon";
@@ -42,6 +42,7 @@ function NavigationGroup({ label, items, onNavigate }) {
 export function AppLayout() {
   const { user, refresh } = useSession();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobile, setMobile] = useState(
     () => window.matchMedia("(max-width: 980px)").matches,
@@ -54,6 +55,9 @@ export function AppLayout() {
   useEffect(() => {
     localStorage.setItem("rv-nav-collapsed", String(collapsed));
   }, [collapsed]);
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.key]);
   useEffect(() => {
     const query = window.matchMedia("(max-width: 980px)");
     const change = () => {

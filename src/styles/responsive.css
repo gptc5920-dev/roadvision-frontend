@@ -320,9 +320,21 @@
   .form input,
   .form select,
   .form textarea,
+  .annotation-toolbar select,
   .app-search input,
   .table-wrap select {
     font-size: 1rem;
+  }
+  .form input,
+  .form select,
+  .form textarea,
+  .annotation-toolbar select,
+  .table-wrap select,
+  .tabs button,
+  .app-nav__group a,
+  .check-field span,
+  .password-input button {
+    min-height: 44px;
   }
   .button,
   .icon-button,
@@ -359,6 +371,12 @@
   }
   .annotation-toolbar > span {
     flex-basis: 100%;
+  }
+  .annotation-toolbar > label {
+    flex-basis: 100%;
+  }
+  .review-grid footer {
+    flex-wrap: wrap;
   }
   .metric-grid,
   .metric-grid--three {

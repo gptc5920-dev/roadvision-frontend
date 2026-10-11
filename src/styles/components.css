@@ -350,6 +350,7 @@
 .form input,
 .form select,
 .form textarea,
+.annotation-toolbar select,
 .table-wrap select {
   min-width: 0;
   width: 100%;
@@ -392,6 +393,15 @@
   justify-content: flex-end;
   gap: 9px;
   padding-top: 5px;
+}
+.annotation-toolbar > label {
+  display: grid;
+  min-width: 0;
+  max-width: 100%;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+  font-weight: 700;
 }
 .notice {
   display: flex;
