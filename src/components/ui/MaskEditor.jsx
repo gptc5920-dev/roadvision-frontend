@@ -1,8 +1,13 @@
 import { useState } from "react";
 
-export function MaskOverlay({ masks }) {
+export function MaskOverlay({ masks, source = "model" }) {
   return (
-    <svg viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
+    <svg
+      className={`mask-overlay mask-overlay--${source}`}
+      viewBox="0 0 1 1"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
       {masks.map((points, index) => (
         <polygon
           key={index}
@@ -33,6 +38,7 @@ export function MaskEditor({ image, onSave, pending }) {
   function addPoint(event) {
     if (pending) return;
     const rect = event.currentTarget.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
     const clamp = (value) => Math.max(0, Math.min(1, Number(value.toFixed(6))));
     update([
       ...points,

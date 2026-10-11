@@ -803,6 +803,14 @@
   stroke: #e879f9;
   stroke-width: 0.004;
 }
+.mask-editor .mask-overlay--estimated polygon {
+  fill: rgba(255, 165, 0, 0.3);
+  stroke: #ffa500;
+}
+.track-grid .mask-editor img {
+  height: auto;
+  aspect-ratio: auto;
+}
 .mask-editor circle {
   fill: #fff;
   stroke: #c026d3;

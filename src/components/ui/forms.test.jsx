@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   cleanup,
+  fireEvent,
   render,
   screen,
   waitFor,
@@ -128,6 +129,51 @@ describe("mask editing", () => {
     filename: "road",
     annotations: [{ points: first }, { points: second }],
   };
+  it.each([
+    [240, 180],
+    [960, 720],
+  ])(
+    "keeps drawn masks normalized at %i by %i display size",
+    async (width, height) => {
+      const save = vi.fn();
+      const view = render(
+        <MaskEditor image={{ ...image, annotations: [] }} onSave={save} />,
+      );
+      const editor = view.container.querySelector(".mask-editor");
+      vi.spyOn(editor, "getBoundingClientRect").mockReturnValue({
+        left: 10,
+        top: 20,
+        width,
+        height,
+      });
+      const expected = [
+        [0.25, 0.25],
+        [0.75, 0.25],
+        [0.5, 0.75],
+      ];
+      for (const [x, y] of expected)
+        fireEvent.click(editor, {
+          clientX: 10 + x * width,
+          clientY: 20 + y * height,
+        });
+      expect(editor.querySelector("polygon").getAttribute("points")).toBe(
+        "0.25,0.25 0.75,0.25 0.5,0.75",
+      );
+      await userEvent.click(screen.getByText("Save all masks"));
+      expect(save).toHaveBeenCalledWith([expected]);
+    },
+  );
+  it("ignores clicks before the image has a measurable size", () => {
+    const view = render(
+      <MaskEditor image={{ ...image, annotations: [] }} onSave={vi.fn()} />,
+    );
+    fireEvent.click(view.container.querySelector(".mask-editor"), {
+      clientX: 10,
+      clientY: 20,
+    });
+    expect(view.container.querySelector("polygon")).toBeNull();
+    expect(screen.getByText("Save as no potholes")).toBeTruthy();
+  });
   it("loads and saves all existing instances without dropping the second pothole", async () => {
     const save = vi.fn();
     render(<MaskEditor image={image} onSave={save} />);

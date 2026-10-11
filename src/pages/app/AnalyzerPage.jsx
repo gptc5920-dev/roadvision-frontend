@@ -15,6 +15,7 @@ import {
   Notice,
 } from "../../components/ui/Feedback";
 import { Modal } from "../../components/ui/Modal";
+import { MaskOverlay } from "../../components/ui/MaskEditor";
 import { useAction, useApi } from "../../hooks/useApi";
 import { endpoints, submitAction } from "../../services/api";
 import { formatDate, formatDuration, formatPercent } from "../../utils/format";
@@ -233,7 +234,19 @@ export function AnalyzerPage() {
                     {selected.tracks.length ? (
                       selected.tracks.map((track) => (
                         <article key={track.id}>
-                          {track.snapshotCropUrl ? (
+                          {track.snapshotFrameUrl &&
+                          track.segmentationPoints?.length >= 3 ? (
+                            <div className="mask-editor mask-editor--review">
+                              <img
+                                src={track.snapshotFrameUrl}
+                                alt="Road defect with mask overlay"
+                              />
+                              <MaskOverlay
+                                masks={[track.segmentationPoints]}
+                                source={track.maskSource}
+                              />
+                            </div>
+                          ) : track.snapshotCropUrl ? (
                             <img
                               src={track.snapshotCropUrl}
                               alt="Pothole detection crop"
@@ -255,6 +268,8 @@ export function AnalyzerPage() {
                               {formatDuration(track.firstTimestamp)} ·{" "}
                               {formatPercent(track.averageConfidence, 1)}{" "}
                               confidence
+                              {track.maskSource === "estimated" &&
+                                " · Estimated mask"}
                             </small>
                           </div>
                         </article>
