@@ -219,6 +219,8 @@ export function DatasetPage() {
                     icon="dataset"
                     title="Dataset is empty"
                     copy="Upload road images to begin building the training set."
+                    to="/app/dataset?tab=upload"
+                    actionLabel="Upload images"
                   />
                 )}
               </Panel>
@@ -342,6 +344,8 @@ export function DatasetPage() {
                     icon="dataset"
                     title="No image selected"
                     copy="Upload an image before drawing masks."
+                    to="/app/dataset?tab=upload"
+                    actionLabel="Upload images"
                   />
                 )}
               </Panel>
@@ -397,7 +401,9 @@ export function DatasetPage() {
                 <EmptyState
                   icon="check"
                   title="Nothing to review"
-                  copy="Annotated images will appear here."
+                  copy="Draw and save pothole masks on uploaded images, then return here to review them."
+                  to="/app/dataset?tab=annotate"
+                  actionLabel="Annotate images"
                 />
               )}
             </Panel>
@@ -582,7 +588,9 @@ export function DatasetPage() {
                 <EmptyState
                   icon="activity"
                   title="No training sessions"
-                  copy="Queue a session once the dataset readiness gate passes."
+                  copy="Check dataset readiness and configure your first training session."
+                  to="/app/dataset?tab=training"
+                  actionLabel="Prepare training"
                 />
               )}
             </Panel>

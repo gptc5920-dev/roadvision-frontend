@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Icon } from "../icons/Icon";
 
 export function LoadingScreen({ label = "Loading" }) {
@@ -46,7 +47,14 @@ export function Notice({ notice, onClose }) {
     </div>
   );
 }
-export function EmptyState({ icon = "database", title, copy, action }) {
+export function EmptyState({
+  icon = "database",
+  title,
+  copy,
+  action,
+  to,
+  actionLabel,
+}) {
   return (
     <div className="empty-state">
       <span>
@@ -54,7 +62,12 @@ export function EmptyState({ icon = "database", title, copy, action }) {
       </span>
       <h3>{title}</h3>
       <p>{copy}</p>
-      {action}
+      {action ||
+        (to && (
+          <Link className="button button--primary" to={to}>
+            {actionLabel}
+          </Link>
+        ))}
     </div>
   );
 }

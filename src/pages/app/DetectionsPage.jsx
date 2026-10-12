@@ -146,7 +146,9 @@ export function DetectionsPage() {
               <EmptyState
                 icon="alert"
                 title="No video defects"
-                copy="Completed video tracks will appear here for review."
+                copy="Analyze survey footage to extract defects for review."
+                to="/app/analyzer"
+                actionLabel="Analyze footage"
               />
             )}
           </Panel>

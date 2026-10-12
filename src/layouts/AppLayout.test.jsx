@@ -113,3 +113,62 @@ describe("responsive navigation", () => {
     expect(menu.getAttribute("aria-expanded")).toBe("true");
   });
 });
+
+describe("page search", () => {
+  it("filters pages, supports keyboard selection and clears the query after navigation", async () => {
+    const user = userEvent.setup();
+    consoleView();
+    const input = screen.getByRole("searchbox", { name: "Search pages" });
+    await user.type(input, "  DASH  ");
+    const results = screen.getByRole("navigation", {
+      name: "Page search results",
+    });
+    expect(within(results).getAllByRole("link")).toHaveLength(1);
+    await user.keyboard("{ArrowDown}");
+    expect(document.activeElement).toBe(
+      within(results).getByRole("link", { name: "Dashboard" }),
+    );
+    await user.keyboard("{Enter}");
+    expect(
+      screen.getByRole("heading", { name: "Dashboard view" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("searchbox", { name: "Search pages" }).value).toBe(
+      "",
+    );
+    expect(
+      screen.queryByRole("navigation", { name: "Page search results" }),
+    ).toBeNull();
+  });
+
+  it("shows no matches without navigating and dismisses results with Escape", async () => {
+    const user = userEvent.setup();
+    consoleView();
+    const input = screen.getByRole("searchbox", { name: "Search pages" });
+    await user.type(input, "not-a-page{Enter}");
+    expect(screen.getByRole("status").textContent).toContain(
+      "No matching pages",
+    );
+    expect(screen.getByRole("heading", { name: "Map view" })).toBeTruthy();
+    await user.keyboard("{Escape}");
+    expect(
+      screen.queryByRole("navigation", { name: "Page search results" }),
+    ).toBeNull();
+    expect(document.activeElement).toBe(input);
+  });
+
+  it("opens the first matching page on submit and dismisses results when focus leaves", async () => {
+    const user = userEvent.setup();
+    consoleView();
+    const input = screen.getByRole("searchbox", { name: "Search pages" });
+    await user.type(input, "dashboard");
+    await user.click(screen.getByRole("heading", { name: "Map view" }));
+    expect(
+      screen.queryByRole("navigation", { name: "Page search results" }),
+    ).toBeNull();
+    await user.click(input);
+    await user.keyboard("{Enter}");
+    expect(
+      screen.getByRole("heading", { name: "Dashboard view" }),
+    ).toBeTruthy();
+  });
+});

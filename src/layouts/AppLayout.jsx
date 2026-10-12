@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSession } from "../app/SessionContext";
 import { Brand } from "../components/brand/Brand";
+import { PageSearch } from "../components/ui/PageSearch";
 import { Icon } from "../components/icons/Icon";
 import { apiFetch, endpoints } from "../services/api";
 
@@ -165,25 +166,10 @@ export function AppLayout() {
           >
             <Icon name="menu" />
           </button>
-          <form
-            className="app-search"
-            onSubmit={(event) => event.preventDefault()}
-          >
-            <Icon name="search" size={18} />
-            <input
-              type="search"
-              placeholder="Search roads, reports, devices…"
-              aria-label="Search current page"
-              onChange={(event) =>
-                window.dispatchEvent(
-                  new CustomEvent("roadvision:search", {
-                    detail: event.target.value,
-                  }),
-                )
-              }
-            />
-            <kbd>⌘ K</kbd>
-          </form>
+          <PageSearch
+            key={location.key}
+            pages={[...primaryNav, ...managementNav]}
+          />
           <div className="app-header__meta">
             <span>
               <i />

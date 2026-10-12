@@ -60,6 +60,29 @@ export function LandingPage() {
           className="hero-preview"
           aria-label="RoadVision operations preview"
         >
+          <div className="hero-preview__mobile">
+            <span className="eyebrow">Operations preview</span>
+            <h2>Spot a defect. Plan a repair.</h2>
+            <article>
+              <span className="status status--critical">Critical defect</span>
+              <h3>Commonwealth Avenue</h3>
+              <p>Review the evidence and coordinate a field response.</p>
+            </article>
+            <ol aria-label="Road repair workflow">
+              <li>
+                <Icon name="video" size={20} />
+                <span>Analyze footage</span>
+              </li>
+              <li>
+                <Icon name="check" size={20} />
+                <span>Review defects</span>
+              </li>
+              <li>
+                <Icon name="truck" size={20} />
+                <span>Dispatch repairs</span>
+              </li>
+            </ol>
+          </div>
           <div className="hero-preview__window">
             <header>
               <Brand compact />

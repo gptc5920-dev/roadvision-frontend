@@ -84,7 +84,9 @@ export function DashboardPage() {
                 ) : (
                   <EmptyState
                     title="No city data"
-                    copy="Reports will appear here once field data is available."
+                    copy="Connect survey cameras to start collecting road reports."
+                    to="/app/fleet"
+                    actionLabel="View fleet cameras"
                   />
                 )}
               </div>
@@ -117,7 +119,9 @@ export function DashboardPage() {
                 ) : (
                   <EmptyState
                     title="No reports yet"
-                    copy="Incoming road reports will appear here."
+                    copy="Check your fleet cameras to begin receiving road reports."
+                    to="/app/fleet"
+                    actionLabel="View fleet cameras"
                   />
                 )}
               </div>
@@ -151,6 +155,8 @@ export function DashboardPage() {
                   icon="video"
                   title="No analysis runs"
                   copy="Upload survey footage to start the first analysis."
+                  to="/app/analyzer"
+                  actionLabel="Analyze footage"
                 />
               )}
             </div>

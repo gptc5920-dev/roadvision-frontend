@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import {
   PageHeader,
   MetricCard,
@@ -15,6 +16,7 @@ import { endpoints, submitAction } from "../../services/api";
 import { formatDate } from "../../utils/format";
 
 export function SourcesPage() {
+  const nameInput = useRef(null);
   const query = useApi(endpoints.sources);
   const action = useAction(query.reload);
   async function add(event) {
@@ -85,7 +87,15 @@ export function SourcesPage() {
                 <EmptyState
                   icon="database"
                   title="No survey sources"
-                  copy="Add the first source using the form beside this list."
+                  copy="Add a survey clip and its road details to reuse it in future analyses."
+                  action={
+                    <button
+                      className="button button--primary"
+                      onClick={() => nameInput.current?.focus()}
+                    >
+                      Add survey source
+                    </button>
+                  }
                 />
               )}
             </Panel>
@@ -93,7 +103,7 @@ export function SourcesPage() {
               <form className="form" onSubmit={add}>
                 <label>
                   Name
-                  <input name="name" maxLength="160" required />
+                  <input ref={nameInput} name="name" maxLength="160" required />
                 </label>
                 <label>
                   Road name

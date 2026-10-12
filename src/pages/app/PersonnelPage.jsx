@@ -139,7 +139,21 @@ export function PersonnelPage() {
               <EmptyState
                 icon="users"
                 title="No personnel records"
-                copy="Approved accounts will appear here."
+                copy={
+                  session.user?.isAdmin
+                    ? "Create an approved account to give your team access to the console."
+                    : "Ask an administrator to add personnel accounts."
+                }
+                action={
+                  session.user?.isAdmin && (
+                    <button
+                      className="button button--primary"
+                      onClick={() => setCreating(true)}
+                    >
+                      Add personnel
+                    </button>
+                  )
+                }
               />
             )}
           </Panel>

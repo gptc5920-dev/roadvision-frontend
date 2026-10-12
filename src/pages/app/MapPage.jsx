@@ -93,7 +93,9 @@ export function MapPage() {
                 <EmptyState
                   icon="map"
                   title="No mapped reports"
-                  copy="Reports with coordinates will be plotted here."
+                  copy="Connect survey cameras to collect road reports with location data."
+                  to="/app/fleet"
+                  actionLabel="View fleet cameras"
                 />
               )}
               {selected && (
