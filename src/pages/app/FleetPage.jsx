@@ -188,7 +188,21 @@ export function FleetPage() {
               <EmptyState
                 icon="camera"
                 title="No fleet cameras registered"
-                copy="Register the first survey vehicle camera to begin live monitoring."
+                copy={
+                  session.user?.isAdmin
+                    ? "Register a survey vehicle camera to begin live monitoring."
+                    : "Ask an administrator to register a survey camera."
+                }
+                action={
+                  session.user?.isAdmin && (
+                    <button
+                      className="button button--primary"
+                      onClick={() => setRegistering(true)}
+                    >
+                      Register camera
+                    </button>
+                  )
+                }
               />
             )}
           </div>

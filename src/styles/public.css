@@ -580,3 +580,14 @@
   color: var(--muted);
   line-height: 1.65;
 }
+
+.hero-preview__mobile {
+  display: none;
+}
+.auth-help,
+.auth-story article small,
+.auth-story article b,
+.password-input button,
+.form-alert {
+  font-size: var(--text-small);
+}

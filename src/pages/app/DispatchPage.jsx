@@ -122,7 +122,9 @@ export function DispatchPage() {
               <EmptyState
                 icon="truck"
                 title="Dispatch queue is clear"
-                copy="New verified incidents will appear here for assignment."
+                copy="There are no active repairs to assign. Check the map for road incidents."
+                to="/app/map"
+                actionLabel="View incident map"
               />
             )}
           </div>
