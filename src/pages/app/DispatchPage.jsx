@@ -1,3 +1,4 @@
+import { Link, useSearchParams } from "react-router-dom";
 import {
   PageHeader,
   MetricCard,
@@ -15,7 +16,11 @@ import { endpoints, submitAction } from "../../services/api";
 import { formatDate } from "../../utils/format";
 
 export function DispatchPage() {
-  const query = useApi(endpoints.reports);
+  const [params] = useSearchParams();
+  const reportId = params.get("report");
+  const query = useApi(
+    `${endpoints.reports}${reportId ? `?report=${encodeURIComponent(reportId)}` : ""}`,
+  );
   const action = useAction(query.reload);
   async function update(reportId, status) {
     const body = new FormData();
@@ -25,7 +30,9 @@ export function DispatchPage() {
     await action.run(() => submitAction("dispatch", body));
   }
   const active =
-    query.data?.reports.filter((report) => report.status !== "resolved") || [];
+    query.data?.reports.filter(
+      (report) => reportId || report.status !== "resolved",
+    ) || [];
   return (
     <div className="page">
       <PageHeader
@@ -34,6 +41,11 @@ export function DispatchPage() {
         copy="Move verified incidents from open report to active repair and resolution."
       />
       <Notice notice={action.notice} onClose={() => action.setNotice(null)} />
+      {reportId && (
+        <Link className="text-link" to="/app/dispatch">
+          View all dispatch reports
+        </Link>
+      )}
       {query.error ? (
         <ErrorBlock message={query.error} onRetry={query.reload} />
       ) : query.loading ? (

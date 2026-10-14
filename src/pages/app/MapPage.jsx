@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   PageHeader,
   MetricCard,
@@ -14,36 +15,47 @@ import { useApi } from "../../hooks/useApi";
 import { endpoints } from "../../services/api";
 import { formatDate } from "../../utils/format";
 
+const GeographicMap = lazy(() =>
+  import("../../components/ui/GeographicMap").then((module) => ({
+    default: module.GeographicMap,
+  })),
+);
+
 export function MapPage() {
-  const { data, loading, error, reload } = useApi(endpoints.reports);
-  const [selected, setSelected] = useState(null);
-  const bounds = useMemo(() => {
-    const reports = data?.reports || [];
-    if (!reports.length) return null;
-    const lat = reports.map((report) => report.lat),
-      lng = reports.map((report) => report.lng);
-    return {
-      minLat: Math.min(...lat),
-      maxLat: Math.max(...lat),
-      minLng: Math.min(...lng),
-      maxLng: Math.max(...lng),
-    };
-  }, [data]);
-  function position(report) {
-    if (!bounds) return { left: "50%", top: "50%" };
-    const lngRange = bounds.maxLng - bounds.minLng || 1,
-      latRange = bounds.maxLat - bounds.minLat || 1;
-    return {
-      left: `${8 + ((report.lng - bounds.minLng) / lngRange) * 84}%`,
-      top: `${8 + (1 - (report.lat - bounds.minLat) / latRange) * 84}%`,
-    };
-  }
+  const { data, loading, error, reload } = useApi(endpoints.reports, {
+    interval: 10000,
+  });
+  const [selectedKey, setSelectedKey] = useState(null);
+  const points = useMemo(
+    () =>
+      [
+        ...(data?.reports || []).map((report) => ({
+          ...report,
+          key: `report-${report.id}`,
+          code: `#${report.id}`,
+          detailUrl: `/app/dispatch?report=${report.id}`,
+        })),
+        ...(data?.detections || []).map((track) => ({
+          ...track,
+          key: `track-${track.id}`,
+          detailUrl: `/app/detections?analysis=${track.analysisId}&track=${track.id}`,
+        })),
+      ].filter(
+        (point) =>
+          Number.isFinite(point.lat) &&
+          Number.isFinite(point.lng) &&
+          Math.abs(point.lat) <= 90 &&
+          Math.abs(point.lng) <= 180,
+      ),
+    [data],
+  );
+  const selected = points.find((point) => point.key === selectedKey);
   return (
     <div className="page">
       <PageHeader
         eyebrow="Geospatial operations"
         title="Live map"
-        copy="Locate road incidents, inspect severity, and prepare field routes from one operational view."
+        copy="Locate road reports and GPS-tagged survey defects, inspect evidence, and open field directions."
       />
       {error ? (
         <ErrorBlock message={error} onRetry={reload} />
@@ -53,86 +65,110 @@ export function MapPage() {
         <>
           <section className="metric-grid metric-grid--three">
             <MetricCard
-              label="Mapped reports"
-              value={data.counts.total}
+              label="Mapped incidents"
+              value={points.length}
               icon="map"
             />
             <MetricCard
               label="Open response"
-              value={data.counts.open}
+              value={
+                points.filter((point) =>
+                  ["open", "unresolved"].includes(point.status),
+                ).length
+              }
               tone="orange"
               icon="alert"
             />
             <MetricCard
               label="Critical priority"
-              value={data.counts.critical}
+              value={
+                points.filter((point) => point.severity === "critical").length
+              }
               tone="red"
               icon="activity"
             />
           </section>
           <div className="map-layout">
             <section className="operations-map">
-              <div className="operations-map__grid" />
-              <svg viewBox="0 0 1000 650" preserveAspectRatio="none">
-                <path d="M-30 510C150 450 190 170 410 230s255 250 400 95 85-230 230-250" />
-                <path d="M30 40c150 80 260 75 350 215s140 285 310 300 230-80 350-65" />
-                <path d="M280-20c-45 180 45 245 75 380s-40 190-95 320" />
-              </svg>
-              {data.reports.map((report) => (
-                <button
-                  key={report.id}
-                  className={`operations-pin operations-pin--${report.severity}${selected?.id === report.id ? " is-active" : ""}`}
-                  style={position(report)}
-                  onClick={() => setSelected(report)}
-                  aria-label={`${report.severity} report in ${report.city}`}
-                >
-                  <span>{report.id}</span>
-                </button>
-              ))}
-              {!data.reports.length && (
-                <EmptyState
-                  icon="map"
-                  title="No mapped reports"
-                  copy="Connect survey cameras to collect road reports with location data."
-                  to="/app/fleet"
-                  actionLabel="View fleet cameras"
+              <Suspense fallback={<LoadingBlock label="Opening map" />}>
+                <GeographicMap
+                  points={points}
+                  selectedKey={selectedKey}
+                  onSelect={setSelectedKey}
                 />
-              )}
+              </Suspense>
               {selected && (
                 <article className="map-popover">
-                  <button onClick={() => setSelected(null)} aria-label="Close">
-                    ×
+                  <button
+                    onClick={() => setSelectedKey(null)}
+                    aria-label="Close incident"
+                  >
+                    ?
                   </button>
                   <StatusBadge value={selected.severity} />
-                  <h3>{selected.city}</h3>
+                  <h3>
+                    {selected.code} ? {selected.city}
+                  </h3>
                   <p>{selected.notes || "No incident notes."}</p>
                   <small>
-                    {selected.deviceId} · {formatDate(selected.detectedAt)}
+                    {selected.deviceId} ? {formatDate(selected.detectedAt)}
                   </small>
+                  <p className="map-coordinates">
+                    {selected.lat.toFixed(6)}, {selected.lng.toFixed(6)}
+                  </p>
+                  <div className="panel__actions">
+                    <Link
+                      className="button button--primary"
+                      to={selected.detailUrl}
+                    >
+                      Open details
+                    </Link>
+                    <a
+                      className="button button--secondary"
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${selected.lat},${selected.lng}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Get directions
+                    </a>
+                  </div>
                 </article>
               )}
             </section>
             <Panel
               title="Map incidents"
-              copy={`${data.reports.length} visible reports`}
+              copy={`${points.length} incidents with valid coordinates`}
               className="map-side-panel"
             >
               <div className="incident-list">
-                {data.reports.map((report) => (
-                  <button key={report.id} onClick={() => setSelected(report)}>
+                {points.map((point) => (
+                  <button
+                    key={point.key}
+                    className={selectedKey === point.key ? "is-active" : ""}
+                    onClick={() => setSelectedKey(point.key)}
+                  >
                     <span
-                      className={`record-dot record-dot--${report.severity}`}
+                      className={`record-dot record-dot--${point.severity}`}
                     />
                     <div>
                       <strong>
-                        #{report.id} · {report.city}
+                        {point.code} ? {point.city}
                       </strong>
-                      <p>{report.notes || report.deviceId}</p>
+                      <p>{point.notes || point.deviceId}</p>
                     </div>
-                    <StatusBadge value={report.status} />
+                    <StatusBadge value={point.status} />
                   </button>
                 ))}
               </div>
+              {!points.length && (
+                <EmptyState
+                  icon="map"
+                  title="No mapped incidents"
+                  copy="Reports and survey defects appear here when valid GPS coordinates are available."
+                  to="/app/fleet"
+                  actionLabel="View fleet cameras"
+                />
+              )}
             </Panel>
           </div>
         </>

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   PageHeader,
   MetricCard,
@@ -17,9 +18,28 @@ import { endpoints, submitAction } from "../../services/api";
 import { formatNumber, formatPercent } from "../../utils/format";
 
 export function DetectionsPage() {
-  const query = useApi(endpoints.detections);
+  const [params] = useSearchParams();
+  const analysisId = params.get("analysis");
+  const trackId = params.get("track");
+  const filter = new URLSearchParams();
+  if (analysisId) filter.set("analysis", analysisId);
+  if (trackId) filter.set("track", trackId);
+  const query = useApi(
+    `${endpoints.detections}${filter.size ? `?${filter}` : ""}`,
+  );
   const action = useAction(query.reload);
   const [selected, setSelected] = useState(null);
+  const opened = useRef(null);
+  useEffect(() => {
+    if (!trackId || opened.current === `${analysisId}:${trackId}`) return;
+    const track = query.data?.tracks.find(
+      (item) => String(item.id) === trackId,
+    );
+    if (track) {
+      opened.current = `${analysisId}:${trackId}`;
+      setSelected(track);
+    }
+  }, [analysisId, trackId, query.data]);
   async function save(event) {
     event.preventDefault();
     const body = new FormData(event.currentTarget);

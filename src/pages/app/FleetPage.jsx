@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   PageHeader,
   MetricCard,
@@ -18,14 +19,15 @@ import { endpoints, submitAction } from "../../services/api";
 import { formatDate, formatNumber } from "../../utils/format";
 
 export function FleetPage() {
+  const navigate = useNavigate();
   const session = useSession();
-  const query = useApi(endpoints.fleet);
+  const query = useApi(endpoints.fleet, { interval: 5000 });
   const action = useAction(query.reload);
   const [registering, setRegistering] = useState(false);
   const devices = query.data?.devices || [];
   const online = devices.filter((device) => device.status === "online").length;
   async function submit(body) {
-    await action.run(() => submitAction("fleet-cams", body));
+    return action.run(() => submitAction("fleet-cams", body));
   }
   async function register(event) {
     event.preventDefault();
@@ -45,7 +47,8 @@ export function FleetPage() {
     body.set("action", "analyze_fleet_stream");
     body.set("device_id", device.id);
     body.set("confidence_threshold", "35");
-    await submit(body);
+    const result = await submit(body);
+    if (result?.redirect) navigate(result.redirect);
   }
   async function stop(device) {
     const body = new FormData();
@@ -142,6 +145,12 @@ export function FleetPage() {
                         {device.activeAnalysis.progress}% ·{" "}
                         {device.activeAnalysis.uniquePotholes} defects
                       </small>
+                      <Link
+                        className="text-link"
+                        to={`/app/analyzer?analysis=${device.activeAnalysis.id}`}
+                      >
+                        Open live analysis
+                      </Link>
                     </div>
                   ) : (
                     <p className="device-card__source">

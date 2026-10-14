@@ -1,4 +1,7 @@
 @media (max-width: 1180px) {
+  .app-header__location {
+    display: none;
+  }
   .map-layout,
   .analyzer-layout,
   .sources-layout,
@@ -152,6 +155,11 @@
   }
 }
 @media (max-width: 760px) {
+  .dashboard-brief {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    padding: 24px;
+  }
   .app-header {
     gap: 9px;
   }
@@ -359,6 +367,21 @@
   }
 }
 @media (max-width: 480px) {
+  .dashboard-brief {
+    padding: 20px;
+    border-radius: var(--radius);
+  }
+  .dashboard-brief__routes > a {
+    padding: 12px;
+    gap: 10px;
+  }
+  .record-list article {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .record-list article > div:last-child {
+    grid-column: 2;
+    justify-items: start;
+  }
   .app-content {
     padding-inline: 12px;
   }

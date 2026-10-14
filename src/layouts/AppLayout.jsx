@@ -50,6 +50,10 @@ export function AppLayout() {
   );
   const navRef = useRef(null);
   const menuRef = useRef(null);
+  const currentPage =
+    [...primaryNav, ...managementNav].find(
+      ([path]) => location.pathname === `/app/${path}`,
+    )?.[1] || "Operations";
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem("rv-nav-collapsed") === "true",
   );
@@ -107,6 +111,9 @@ export function AppLayout() {
     <div
       className={`app-frame${collapsed ? " app-frame--collapsed" : ""}${mobileOpen ? " app-frame--nav-open" : ""}`}
     >
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <aside
         ref={navRef}
         id="app-navigation"
@@ -166,19 +173,24 @@ export function AppLayout() {
           >
             <Icon name="menu" />
           </button>
+          <div className="app-header__location">
+            <span>Workspace</span>
+            <strong>{currentPage}</strong>
+          </div>
           <PageSearch
             key={location.key}
             pages={[...primaryNav, ...managementNav]}
+            shortcutEnabled={!mobile || !mobileOpen}
           />
           <div className="app-header__meta">
             <span>
-              <i />
-              System online
+              <Icon name="shield" size={16} />
+              Operations console
             </span>
             <button onClick={signOut}>Sign out</button>
           </div>
         </header>
-        <main className="app-content" id="main-content">
+        <main className="app-content" id="main-content" tabIndex={-1}>
           <Outlet />
         </main>
       </div>

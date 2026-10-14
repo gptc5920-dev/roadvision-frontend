@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "../../components/icons/Icon";
 import {
   PageHeader,
@@ -23,6 +23,7 @@ import { formatDate, formatDuration, formatPercent } from "../../utils/format";
 const activeStatuses = new Set(["queued", "retrying", "running"]);
 
 export function AnalyzerPage() {
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const selectedId = params.get("analysis");
   const path = `${endpoints.analyzer}${selectedId ? `?analysis=${selectedId}` : ""}`;
@@ -33,6 +34,7 @@ export function AnalyzerPage() {
   });
   const action = useAction();
   const [uploading, setUploading] = useState(false);
+  const [sourceType, setSourceType] = useState("upload");
   const selected = query.data?.selected;
   const source =
     selected?.media.processed ||
@@ -53,6 +55,11 @@ export function AnalyzerPage() {
     const result = await action.run(() => submitAction("analyzer", body));
     if (result?.ok) {
       setUploading(false);
+      if (result.redirect) {
+        navigate(result.redirect);
+        await query.reload();
+        return;
+      }
       const refreshed = await query.reload();
       if (refreshed?.analyses?.[0])
         setParams({ analysis: refreshed.analyses[0].id });
@@ -363,21 +370,52 @@ export function AnalyzerPage() {
         wide
       >
         <form className="form modal-form" onSubmit={upload}>
-          <div className="upload-drop">
-            <Icon name="upload" size={28} />
-            <strong>Select road survey footage</strong>
-            <p>MP4, MOV, AVI, MKV, or WebM</p>
-            <input type="file" name="video" accept="video/*" required />
-          </div>
+          <label>
+            Footage source
+            <select
+              name="source_type"
+              value={sourceType}
+              onChange={(event) => setSourceType(event.target.value)}
+            >
+              <option value="upload">Upload video file</option>
+              <option value="live-stream">Live RTSP / HTTP stream</option>
+            </select>
+          </label>
+          {sourceType === "upload" ? (
+            <div className="upload-drop">
+              <Icon name="upload" size={28} />
+              <strong>Select road survey footage</strong>
+              <p>MP4, MOV, AVI, MKV, or WebM</p>
+              <input
+                type="file"
+                name="video"
+                accept=".mp4,.mov,.avi,.mkv,.webm"
+                required
+              />
+            </div>
+          ) : (
+            <label>
+              Stream URL
+              <input
+                name="stream_url"
+                maxLength="500"
+                pattern="(rtsp|http|https)://.+"
+                placeholder="rtsp://camera-host/feed"
+                required
+              />
+              <small>
+                Use a stream reachable from the analysis server. Private cameras
+                require the trusted-network setting.
+              </small>
+            </label>
+          )}
           <div className="form-grid">
-            <input type="hidden" name="source_type" value="upload" />
             <label>
               Road section
               <input
                 name="road_section"
                 placeholder="Commonwealth Avenue"
                 maxLength="180"
-                required
               />
             </label>
             <label>
@@ -436,7 +474,7 @@ export function AnalyzerPage() {
               className="button button--primary"
               disabled={action.pending}
             >
-              {action.pending ? "Uploading…" : "Upload and start analysis"}
+              {action.pending ? "Starting…" : "Start analysis"}
             </button>
           </footer>
         </form>

@@ -66,7 +66,7 @@
   white-space: normal;
   text-align: center;
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -194,7 +194,7 @@
   margin: 0;
   color: var(--forest-950);
   font-family: var(--display);
-  font-size: 0.96rem;
+  font-size: 1.02rem;
   letter-spacing: -0.025em;
 }
 .panel__header p {
@@ -222,21 +222,21 @@
 .metric-card {
   position: relative;
   display: grid;
-  min-height: 126px;
+  min-height: 146px;
   align-content: center;
   gap: 4px;
   overflow: hidden;
-  padding: 18px;
+  padding: 22px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
 }
 .metric-card::before {
   content: "";
   position: absolute;
   inset: 0 0 auto;
-  height: 3px;
+  height: 2px;
   background: var(--forest-700);
 }
 .metric-card--orange::before {
@@ -261,7 +261,7 @@
 .metric-card strong {
   color: var(--forest-950);
   font-family: var(--display);
-  font-size: 1.85rem;
+  font-size: 2.25rem;
   letter-spacing: -0.05em;
 }
 .metric-card small {
@@ -279,6 +279,36 @@
   background: var(--mint-soft);
   border-radius: 8px;
   place-items: center;
+}
+.metric-card > span:not(.metric-card__icon) {
+  padding-right: 40px;
+}
+.metric-card strong {
+  font-variant-numeric: tabular-nums;
+}
+.metric-card--orange .metric-card__icon {
+  color: var(--orange-dark);
+  background: var(--orange-soft);
+}
+.metric-card--red .metric-card__icon {
+  color: var(--red);
+  background: var(--red-soft);
+}
+.metric-card--blue .metric-card__icon {
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+.metric-card--slate .metric-card__icon {
+  color: var(--ink-soft);
+  background: var(--surface-soft);
+}
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.table-wrap tbody tr:hover {
+  background: var(--surface-soft);
 }
 .status {
   display: inline-flex;
@@ -571,9 +601,9 @@ table {
   border-collapse: collapse;
 }
 th {
-  padding: 10px 12px;
+  padding: 14px 16px;
   color: #5e6d64;
-  background: #f0f4f1;
+  background: #f5f8f6;
   font-size: var(--text-small);
   font-weight: 800;
   letter-spacing: 0.055em;
@@ -582,7 +612,7 @@ th {
   white-space: nowrap;
 }
 td {
-  padding: 10px 12px;
+  padding: 14px 16px;
   color: var(--ink-soft);
   border-top: 1px solid #e8ece9;
   font-size: var(--text-small);

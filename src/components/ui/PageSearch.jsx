@@ -1,8 +1,8 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "../icons/Icon";
 
-export function PageSearch({ pages }) {
+export function PageSearch({ pages, shortcutEnabled = true }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -14,6 +14,25 @@ export function PageSearch({ pages }) {
     `${path} ${label}`.toLowerCase().includes(term),
   );
   const open = focused && Boolean(term);
+  const shortcut = /Mac|iPhone|iPad/.test(navigator.platform)
+    ? "⌘ K"
+    : "Ctrl K";
+
+  useEffect(() => {
+    const keydown = (event) => {
+      if (
+        shortcutEnabled &&
+        (event.ctrlKey || event.metaKey) &&
+        event.key.toLowerCase() === "k"
+      ) {
+        event.preventDefault();
+        input.current?.focus();
+        setFocused(true);
+      }
+    };
+    document.addEventListener("keydown", keydown);
+    return () => document.removeEventListener("keydown", keydown);
+  }, [shortcutEnabled]);
 
   return (
     <div
@@ -43,8 +62,9 @@ export function PageSearch({ pages }) {
         <input
           ref={input}
           type="search"
-          placeholder="Search…"
+          placeholder="Find a page…"
           aria-label="Search pages"
+          aria-keyshortcuts="Control+k Meta+k"
           aria-describedby={hintId}
           aria-controls={open ? resultsId : undefined}
           value={query}
@@ -67,6 +87,7 @@ export function PageSearch({ pages }) {
         <span id={hintId} className="app-search__scope">
           Pages
         </span>
+        <kbd aria-hidden="true">{shortcut}</kbd>
       </form>
       {open && (
         <nav

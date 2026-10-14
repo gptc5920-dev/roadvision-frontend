@@ -115,6 +115,23 @@ describe("responsive navigation", () => {
 });
 
 describe("page search", () => {
+  it("focuses search with Ctrl or Command K and preserves focus inside the mobile drawer", async () => {
+    const user = userEvent.setup();
+    consoleView();
+    const input = screen.getByRole("searchbox", { name: "Search pages" });
+    await user.keyboard("{Control>}k{/Control}");
+    expect(document.activeElement).toBe(input);
+    await user.click(screen.getByRole("button", { name: "Toggle navigation" }));
+    const nav = screen.getByRole("complementary", {
+      name: "Primary navigation",
+    });
+    await user.keyboard("{Control>}k{/Control}");
+    expect(nav.contains(document.activeElement)).toBe(true);
+    await user.keyboard("{Escape}");
+    await user.keyboard("{Meta>}k{/Meta}");
+    expect(document.activeElement).toBe(input);
+  });
+
   it("filters pages, supports keyboard selection and clears the query after navigation", async () => {
     const user = userEvent.setup();
     consoleView();

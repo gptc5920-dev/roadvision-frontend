@@ -1,3 +1,4 @@
+import { ValidatedForm, PresetNumber } from "../../components/ui/ValidatedForm";
 import { PageHeader, Panel, StatusBadge } from "../../components/ui/Page";
 import { ErrorBlock, LoadingBlock, Notice } from "../../components/ui/Feedback";
 import { useSession } from "../../app/SessionContext";
@@ -22,10 +23,11 @@ const Check = ({ name, label, defaultChecked, disabled }) => (
 export function SettingsPage() {
   const session = useSession();
   const query = useApi(endpoints.settings);
-  const action = useAction(async () => {
+  const profileAction = useAction(async () => {
     await query.reload();
     await session.refresh();
   });
+  const action = useAction(query.reload);
   const isAdmin = session.user?.isAdmin;
   async function settings(event) {
     event.preventDefault();
@@ -37,7 +39,7 @@ export function SettingsPage() {
     event.preventDefault();
     const body = new FormData(event.currentTarget);
     body.set("action", "update_profile");
-    await action.run(() => submitAction("settings", body));
+    await profileAction.run(() => submitAction("settings", body));
   }
   return (
     <div className="page">
@@ -61,7 +63,11 @@ export function SettingsPage() {
                 : "Administrator access is required to change these values."
             }
           >
-            <form className="form settings-form" onSubmit={settings}>
+            <ValidatedForm
+              className="form settings-form"
+              fields={action.fields}
+              onSubmit={settings}
+            >
               <div className="form-grid form-grid--three">
                 <label>
                   Active model
@@ -113,46 +119,50 @@ export function SettingsPage() {
                 </label>
                 <label>
                   Confidence threshold
-                  <input
-                    type="number"
+                  <PresetNumber
                     name="confidence_threshold"
+                    options={[25, 30, 35, 50, 70, 85, 95]}
                     defaultValue={query.data.configuration.confidenceThreshold}
                     min="1"
                     max="99"
                     disabled={!isAdmin}
+                    required
                   />
                 </label>
                 <label>
                   IoU threshold
-                  <input
-                    type="number"
+                  <PresetNumber
                     name="iou_threshold"
+                    options={[30, 45, 50, 60, 70]}
                     defaultValue={query.data.configuration.iouThreshold}
                     min="1"
                     max="99"
                     disabled={!isAdmin}
+                    required
                   />
                 </label>
                 <label>
                   Input resolution
-                  <input
-                    type="number"
+                  <PresetNumber
                     name="input_resolution"
+                    options={[320, 512, 640, 768, 1024, 1280, 1536, 2048]}
                     defaultValue={query.data.configuration.inputResolution}
                     min="160"
                     max="2048"
                     disabled={!isAdmin}
+                    required
                   />
                 </label>
                 <label>
                   Frame skip
-                  <input
-                    type="number"
+                  <PresetNumber
                     name="frame_skip"
+                    options={[1, 2, 3, 5, 10, 30]}
                     defaultValue={query.data.configuration.frameSkip}
                     min="1"
                     max="120"
                     disabled={!isAdmin}
+                    required
                   />
                 </label>
                 <label>
@@ -181,58 +191,63 @@ export function SettingsPage() {
                 </label>
                 <label>
                   Max detections
-                  <input
-                    type="number"
+                  <PresetNumber
                     name="max_detections"
+                    options={[10, 25, 50, 100, 200, 500]}
                     defaultValue={query.data.configuration.maxDetections}
                     min="1"
                     max="500"
                     disabled={!isAdmin}
+                    required
                   />
                 </label>
                 <label>
                   Max attempts
-                  <input
-                    type="number"
+                  <PresetNumber
                     name="max_attempts"
+                    options={[1, 2, 3, 5, 10]}
                     defaultValue={query.data.configuration.maxAttempts}
                     min="1"
                     max="10"
                     disabled={!isAdmin}
+                    required
                   />
                 </label>
                 <label>
                   Min track appearances
-                  <input
-                    type="number"
+                  <PresetNumber
                     name="min_track_appearances"
+                    options={[1, 2, 3, 5, 10]}
                     defaultValue={query.data.configuration.minTrackAppearances}
                     min="1"
                     max="30"
                     disabled={!isAdmin}
+                    required
                   />
                 </label>
                 <label>
                   Dedup IoU
-                  <input
-                    type="number"
+                  <PresetNumber
                     name="dedup_iou_threshold"
+                    options={[0.15, 0.25, 0.35, 0.5, 0.75]}
                     defaultValue={query.data.configuration.dedupIouThreshold}
                     min="0.05"
                     max="0.95"
                     step="0.001"
                     disabled={!isAdmin}
+                    required
                   />
                 </label>
                 <label>
                   Dedup max gap
-                  <input
-                    type="number"
+                  <PresetNumber
                     name="dedup_max_gap_frames"
+                    options={[30, 60, 90, 150, 300]}
                     defaultValue={query.data.configuration.dedupMaxGapFrames}
                     min="1"
                     max="1000"
                     disabled={!isAdmin}
+                    required
                   />
                 </label>
               </div>
@@ -288,7 +303,7 @@ export function SettingsPage() {
                   Save analyzer settings
                 </button>
               )}
-            </form>
+            </ValidatedForm>
           </Panel>
           <aside className="settings-side">
             <Panel title="System readiness">
@@ -326,7 +341,15 @@ export function SettingsPage() {
               </div>
             </Panel>
             <Panel title="Console profile">
-              <form className="form" onSubmit={profile}>
+              <Notice
+                notice={profileAction.notice}
+                onClose={() => profileAction.setNotice(null)}
+              />
+              <ValidatedForm
+                className="form"
+                fields={profileAction.fields}
+                onSubmit={profile}
+              >
                 <label>
                   Full name
                   <input
@@ -348,11 +371,11 @@ export function SettingsPage() {
                 </label>
                 <button
                   className="button button--secondary"
-                  disabled={action.pending}
+                  disabled={profileAction.pending}
                 >
                   Update profile
                 </button>
-              </form>
+              </ValidatedForm>
             </Panel>
           </aside>
         </div>

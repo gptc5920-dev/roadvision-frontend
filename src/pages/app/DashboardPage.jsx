@@ -13,19 +13,25 @@ import {
 import { useApi } from "../../hooks/useApi";
 import { endpoints } from "../../services/api";
 import { formatDate, formatNumber } from "../../utils/format";
+import { Icon } from "../../components/icons/Icon";
 
 export function DashboardPage() {
   const { data, loading, error, reload } = useApi(endpoints.overview);
   return (
-    <div className="page">
+    <div className="page dashboard-page">
       <PageHeader
         eyebrow="Network overview"
         title="Dashboard"
         copy="Live operational picture across road reports, survey vehicles, and reviewed video defects."
         actions={
-          <Link className="button button--primary" to="/app/analyzer">
-            Analyze footage
-          </Link>
+          <>
+            <Link className="button button--secondary" to="/app/map">
+              <Icon name="map" size={17} /> View live map
+            </Link>
+            <Link className="button button--primary" to="/app/analyzer">
+              <Icon name="upload" size={17} /> Analyze footage
+            </Link>
+          </>
         }
       />
       {error ? (
@@ -34,6 +40,58 @@ export function DashboardPage() {
         <LoadingBlock />
       ) : (
         <>
+          <section
+            className="dashboard-brief"
+            aria-labelledby="dashboard-brief-title"
+          >
+            <div className="dashboard-brief__copy">
+              <span className="dashboard-brief__eyebrow">Your next step</span>
+              <h2 id="dashboard-brief-title">
+                {data.metrics.unresolvedDefects > 0
+                  ? `${formatNumber(data.metrics.unresolvedDefects)} defects ready for review`
+                  : "A clearer view of every road."}
+              </h2>
+              <p>
+                {data.metrics.unresolvedDefects > 0
+                  ? "Review detection evidence and confirm defects to keep field response moving."
+                  : "Analyze survey footage, inspect detections, and coordinate your next field response."}
+              </p>
+              <Link
+                to={
+                  data.metrics.unresolvedDefects > 0
+                    ? "/app/detections"
+                    : "/app/analyzer"
+                }
+              >
+                {data.metrics.unresolvedDefects > 0
+                  ? "Review defect inventory"
+                  : "Start an analysis"}
+                <Icon name="arrow" size={18} />
+              </Link>
+            </div>
+            <div className="dashboard-brief__routes">
+              <Link to="/app/map">
+                <span>
+                  <Icon name="map" />
+                </span>
+                <div>
+                  <strong>Explore the network</strong>
+                  <small>Locate reports on the live map</small>
+                </div>
+                <Icon name="chevron" size={16} />
+              </Link>
+              <Link to="/app/dispatch">
+                <span>
+                  <Icon name="truck" />
+                </span>
+                <div>
+                  <strong>Coordinate repairs</strong>
+                  <small>Manage dispatch and field response</small>
+                </div>
+                <Icon name="chevron" size={16} />
+              </Link>
+            </div>
+          </section>
           <section className="metric-grid">
             <MetricCard
               label="Open reports"
@@ -130,6 +188,11 @@ export function DashboardPage() {
           <Panel
             title="Recent analysis runs"
             copy="Latest video processing activity"
+            actions={
+              <Link className="text-link" to="/app/analyzer">
+                All analyses <Icon name="arrow" size={15} />
+              </Link>
+            }
           >
             <div className="analysis-list">
               {data.recentAnalyses.length ? (

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { ValidatedForm, PresetNumber } from "../../components/ui/ValidatedForm";
 import { MaskEditor, MaskOverlay } from "../../components/ui/MaskEditor";
 import { useSearchParams } from "react-router-dom";
 import { Icon } from "../../components/icons/Icon";
@@ -80,6 +81,12 @@ export function DatasetPage() {
     event.preventDefault();
     const body = new FormData(event.currentTarget);
     body.set("action", "start_training");
+    if (await run(body)) setParams({ tab: "history" });
+  }
+  async function retryTraining(session) {
+    const body = new FormData();
+    body.set("action", "retry_training");
+    body.set("session_id", session.id);
     await run(body);
   }
   async function testDetection(event) {
@@ -231,7 +238,23 @@ export function DatasetPage() {
               title="Upload road imagery"
               copy="Images in the same survey or route group stay in one data split to prevent leakage."
             >
-              <form className="form upload-form" onSubmit={upload}>
+              <ValidatedForm
+                className="form upload-form"
+                fields={action.fields}
+                onSubmit={upload}
+                validate={(body) =>
+                  Number(body.get("train_percent")) +
+                    Number(body.get("val_percent")) +
+                    Number(body.get("test_percent")) ===
+                  100
+                    ? {}
+                    : {
+                        __all__: [
+                          "Training, validation, and testing split percentages must total 100%.",
+                        ],
+                      }
+                }
+              >
                 <div className="upload-drop">
                   <Icon name="upload" size={30} />
                   <strong>Choose one or more road images</strong>
@@ -239,7 +262,7 @@ export function DatasetPage() {
                   <input
                     type="file"
                     name="images"
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,.webp"
                     multiple
                     required
                   />
@@ -247,8 +270,20 @@ export function DatasetPage() {
                 <div className="form-grid">
                   <label>
                     Source group
+                    <datalist id="dataset-source-groups">
+                      {[
+                        ...new Set(
+                          images
+                            .map((image) => image.sourceGroup)
+                            .filter(Boolean),
+                        ),
+                      ].map((group) => (
+                        <option key={group} value={group} />
+                      ))}
+                    </datalist>
                     <input
                       name="source_group"
+                      list="dataset-source-groups"
                       placeholder="route-17-survey-a"
                       maxLength="120"
                       pattern="[A-Za-z0-9_-]+"
@@ -272,6 +307,7 @@ export function DatasetPage() {
                       defaultValue="70"
                       min="1"
                       max="98"
+                      required
                     />
                   </label>
                   <label>
@@ -282,6 +318,7 @@ export function DatasetPage() {
                       defaultValue="20"
                       min="1"
                       max="98"
+                      required
                     />
                   </label>
                   <label>
@@ -292,6 +329,7 @@ export function DatasetPage() {
                       defaultValue="10"
                       min="1"
                       max="98"
+                      required
                     />
                   </label>
                 </div>
@@ -301,7 +339,7 @@ export function DatasetPage() {
                 >
                   {action.pending ? "Uploading…" : "Upload to dataset"}
                 </button>
-              </form>
+              </ValidatedForm>
             </Panel>
           )}
           {tab === "annotate" && (
@@ -413,7 +451,23 @@ export function DatasetPage() {
               title="Start model training"
               copy="The dataset is frozen into a reproducible manifest when the session is queued."
             >
-              <form className="form training-form" onSubmit={startTraining}>
+              {!query.data.readiness.ready && (
+                <div className="notice notice--error" role="status">
+                  <div>
+                    <strong>Prepare the dataset before training</strong>
+                    <ul>
+                      {query.data.readiness.errors.map((error) => (
+                        <li key={error}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+              <ValidatedForm
+                className="form training-form"
+                fields={action.fields}
+                onSubmit={startTraining}
+              >
                 <div className="form-grid form-grid--three">
                   <label>
                     Architecture
@@ -426,9 +480,9 @@ export function DatasetPage() {
                   </label>
                   <label>
                     Epochs
-                    <input
-                      type="number"
+                    <PresetNumber
                       name="epochs"
+                      options={[10, 25, 50, 100, 200]}
                       defaultValue="100"
                       min="1"
                       max="1000"
@@ -436,9 +490,9 @@ export function DatasetPage() {
                   </label>
                   <label>
                     Batch size
-                    <input
-                      type="number"
+                    <PresetNumber
                       name="batch_size"
+                      options={[1, 2, 4, 8, 16, 32, 64]}
                       defaultValue="8"
                       min="1"
                       max="256"
@@ -446,9 +500,11 @@ export function DatasetPage() {
                   </label>
                   <label>
                     Image size
-                    <input
-                      type="number"
+                    <PresetNumber
                       name="image_size"
+                      options={[
+                        128, 256, 320, 512, 640, 768, 1024, 1280, 1536, 2048,
+                      ]}
                       defaultValue="512"
                       min="128"
                       max="2048"
@@ -456,24 +512,29 @@ export function DatasetPage() {
                   </label>
                   <label>
                     Learning rate
-                    <input
-                      type="number"
+                    <PresetNumber
                       name="learning_rate"
+                      options={[0.0001, 0.001, 0.01]}
                       defaultValue="0.001"
                       step="0.000001"
                       min="0.000001"
                       required
+                      max="1"
                     />
                   </label>
                   <label>
                     Device
-                    <input name="device" defaultValue="cpu" maxLength="60" />
+                    <select name="device" defaultValue="auto">
+                      <option value="auto">Auto</option>
+                      <option value="cpu">CPU</option>
+                      <option value="0">CUDA GPU 0</option>
+                    </select>
                   </label>
                   <label>
                     Patience
-                    <input
-                      type="number"
+                    <PresetNumber
                       name="patience"
+                      options={[0, 10, 20, 30, 50, 100]}
                       defaultValue="30"
                       min="0"
                       max="300"
@@ -481,9 +542,9 @@ export function DatasetPage() {
                   </label>
                   <label>
                     Workers
-                    <input
-                      type="number"
+                    <PresetNumber
                       name="workers"
+                      options={[0, 2, 4, 8]}
                       defaultValue="2"
                       min="0"
                       max="32"
@@ -507,9 +568,9 @@ export function DatasetPage() {
                   </label>
                   <label>
                     Seed
-                    <input
-                      type="number"
+                    <PresetNumber
                       name="seed"
+                      options={[42, 123, 2026]}
                       defaultValue="42"
                       min="0"
                       max="2147483647"
@@ -517,9 +578,9 @@ export function DatasetPage() {
                   </label>
                   <label>
                     Freeze layers
-                    <input
-                      type="number"
+                    <PresetNumber
                       name="freeze_layers"
+                      options={[0, 10, 20]}
                       defaultValue="0"
                       min="0"
                       max="24"
@@ -532,7 +593,7 @@ export function DatasetPage() {
                 >
                   Queue training session
                 </button>
-              </form>
+              </ValidatedForm>
             </Panel>
           )}
           {tab === "history" && (
@@ -547,6 +608,18 @@ export function DatasetPage() {
                       </p>
                     </div>
                     <StatusBadge value={session.status} />
+                    {session.active && (
+                      <StatusBadge value="active" label="Active model" />
+                    )}
+                    {session.status === "failed" && !session.active && (
+                      <button
+                        className="button button--secondary"
+                        disabled={action.pending}
+                        onClick={() => retryTraining(session)}
+                      >
+                        <Icon name="refresh" size={16} /> Retry training
+                      </button>
+                    )}
                     {session.error && (
                       <p className="training-message" role="alert">
                         {session.error}
@@ -601,22 +674,26 @@ export function DatasetPage() {
                 title="Test active detector"
                 copy="Run the active model on a single road image."
               >
-                <form className="form" onSubmit={testDetection}>
+                <ValidatedForm
+                  className="form"
+                  fields={action.fields}
+                  onSubmit={testDetection}
+                >
                   <label>
                     Test image
                     <input
                       type="file"
                       name="test_image"
-                      accept="image/*"
+                      accept=".jpg,.jpeg,.png,.webp"
                       required
                     />
                   </label>
                   <div className="form-grid">
                     <label>
                       Confidence threshold
-                      <input
-                        type="number"
+                      <PresetNumber
                         name="confidence_threshold"
+                        options={[25, 30, 35, 50, 70, 85, 95]}
                         defaultValue="50"
                         min="1"
                         max="99"
@@ -624,9 +701,9 @@ export function DatasetPage() {
                     </label>
                     <label>
                       IoU threshold
-                      <input
-                        type="number"
+                      <PresetNumber
                         name="iou_threshold"
+                        options={[30, 45, 50, 60, 70]}
                         defaultValue="45"
                         min="1"
                         max="99"
@@ -639,7 +716,7 @@ export function DatasetPage() {
                   >
                     Run detection test
                   </button>
-                </form>
+                </ValidatedForm>
               </Panel>
               <Panel title="Recent tests">
                 <div className="test-list">
