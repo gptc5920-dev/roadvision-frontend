@@ -102,7 +102,7 @@
   display: grid;
   gap: 13px;
 }
-.bar-list > div {
+.bar-list__row {
   display: grid;
   grid-template-columns: minmax(85px, 1fr) minmax(0, 2fr) 38px;
   align-items: center;
@@ -110,19 +110,19 @@
   color: var(--muted);
   font-size: var(--text-small);
 }
-.bar-list > div > div {
+.bar-list__row > div {
   overflow: hidden;
   height: 8px;
   background: #e7ece8;
   border-radius: 99px;
 }
-.bar-list i {
+.bar-list__row i {
   display: block;
   height: 100%;
   background: var(--forest-700);
   border-radius: inherit;
 }
-.bar-list strong {
+.bar-list__row strong {
   color: var(--ink);
   text-align: right;
 }
@@ -144,11 +144,11 @@
 .record-list article > div:nth-child(2) {
   min-width: 0;
 }
-.record-list strong {
+.record-list article strong {
   display: block;
   font-size: var(--text-small);
 }
-.record-list p {
+.record-list article p {
   overflow: hidden;
   margin: 2px 0 0;
   color: var(--muted);
@@ -161,7 +161,7 @@
   justify-items: end;
   gap: 5px;
 }
-.record-list small {
+.record-list article small {
   color: var(--muted);
   font-size: var(--text-small);
 }

@@ -127,7 +127,7 @@ export function DashboardPage() {
               <div className="bar-list">
                 {data.cityCounts.length ? (
                   data.cityCounts.map((item) => (
-                    <div key={item.city}>
+                    <div className="bar-list__row" key={item.city}>
                       <span>{item.city || "Unassigned"}</span>
                       <div>
                         <i
