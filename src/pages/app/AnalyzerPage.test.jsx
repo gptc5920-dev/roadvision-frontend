@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { useApi } from "../../hooks/useApi";
 import { AnalyzerPage } from "./AnalyzerPage";
@@ -11,7 +11,7 @@ vi.mock("../../hooks/useApi", () => ({
 }));
 afterEach(cleanup);
 
-function renderTrack(source, polygon) {
+function renderTrack(source, polygon, overrides = {}) {
   useApi.mockReturnValue({
     loading: false,
     reload: vi.fn(),
@@ -38,6 +38,7 @@ function renderTrack(source, polygon) {
             snapshotCropUrl: "/crop.jpg",
             segmentationPoints: polygon,
             maskSource: source,
+            ...overrides,
           },
         ],
       },
@@ -78,5 +79,39 @@ describe("analyzer mask previews", () => {
       screen.getByAltText("Pothole detection crop").getAttribute("src"),
     ).toBe("/crop.jpg");
     expect(screen.queryByAltText("Road defect with mask overlay")).toBeNull();
+  });
+
+  it("falls back to the crop without applying full-frame mask coordinates", () => {
+    renderTrack("estimated", polygon);
+    fireEvent.error(screen.getByAltText("Road defect with mask overlay"));
+    expect(
+      screen.getByAltText("Pothole detection crop").getAttribute("src"),
+    ).toBe("/crop.jpg");
+    expect(document.querySelector(".mask-overlay")).toBeNull();
+    fireEvent.error(screen.getByAltText("Pothole detection crop"));
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.getByText("Snapshot unavailable")).toBeTruthy();
+  });
+
+  it("falls back to the full frame if the crop cannot load", () => {
+    renderTrack("none", []);
+    fireEvent.error(screen.getByAltText("Pothole detection crop"));
+    expect(
+      screen.getByAltText("Road defect snapshot").getAttribute("src"),
+    ).toBe("/frame.jpg");
+    expect(document.querySelector(".mask-overlay")).toBeNull();
+  });
+
+  it("shows legacy full-frame snapshots without a crop or polygon", () => {
+    renderTrack("none", [], { snapshotCropUrl: "" });
+    expect(
+      screen.getByAltText("Road defect snapshot").getAttribute("src"),
+    ).toBe("/frame.jpg");
+  });
+
+  it("shows a consistent empty state when no snapshot was saved", () => {
+    renderTrack("none", [], { snapshotCropUrl: "", snapshotFrameUrl: "" });
+    expect(screen.getByText("Snapshot unavailable")).toBeTruthy();
+    expect(screen.queryByRole("img")).toBeNull();
   });
 });

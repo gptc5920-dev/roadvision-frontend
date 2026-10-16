@@ -670,10 +670,23 @@
   background: #dfe6e1;
   place-items: center;
 }
-.track-grid article > div {
+.track-grid .track-card__preview {
+  display: grid;
+  align-items: center;
+  aspect-ratio: 16/9;
+  background: #dfe6e1;
+}
+.track-grid .track-card__preview img {
+  display: block;
+}
+.track-grid .track-card__placeholder {
+  align-content: center;
+  gap: 8px;
+}
+.track-card__details {
   padding: 10px;
 }
-.track-grid article > div > span {
+.track-card__details > span {
   display: flex;
   align-items: center;
   justify-content: space-between;

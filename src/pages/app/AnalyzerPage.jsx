@@ -15,7 +15,7 @@ import {
   Notice,
 } from "../../components/ui/Feedback";
 import { Modal } from "../../components/ui/Modal";
-import { MaskOverlay } from "../../components/ui/MaskEditor";
+import { TrackPreview } from "../../components/ui/TrackPreview";
 import { useAction, useApi } from "../../hooks/useApi";
 import { endpoints, submitAction } from "../../services/api";
 import { formatDate, formatDuration, formatPercent } from "../../utils/format";
@@ -241,29 +241,11 @@ export function AnalyzerPage() {
                     {selected.tracks.length ? (
                       selected.tracks.map((track) => (
                         <article key={track.id}>
-                          {track.snapshotFrameUrl &&
-                          track.segmentationPoints?.length >= 3 ? (
-                            <div className="mask-editor mask-editor--review">
-                              <img
-                                src={track.snapshotFrameUrl}
-                                alt="Road defect with mask overlay"
-                              />
-                              <MaskOverlay
-                                masks={[track.segmentationPoints]}
-                                source={track.maskSource}
-                              />
-                            </div>
-                          ) : track.snapshotCropUrl ? (
-                            <img
-                              src={track.snapshotCropUrl}
-                              alt="Pothole detection crop"
-                            />
-                          ) : (
-                            <span className="track-card__placeholder">
-                              <Icon name="alert" />
-                            </span>
-                          )}
-                          <div>
+                          <TrackPreview
+                            key={`${track.snapshotFrameUrl}:${track.snapshotCropUrl}`}
+                            track={track}
+                          />
+                          <div className="track-card__details">
                             <span>
                               <strong>{track.code}</strong>
                               <StatusBadge value={track.severity} />
