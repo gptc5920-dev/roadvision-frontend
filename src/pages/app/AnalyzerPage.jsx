@@ -72,6 +72,23 @@ export function AnalyzerPage() {
     const result = await action.run(() => submitAction("analyzer", body));
     if (result?.ok) await query.reload();
   }
+  async function removeAnalysis(analysis) {
+    if (
+      !window.confirm(
+        `Remove "${analysis.name}" and its detected tracks? This cannot be undone.`,
+      )
+    )
+      return;
+    const body = new FormData();
+    body.set("action", "remove_analysis");
+    body.set("analysis_id", analysis.id);
+    const result = await action.run(() => submitAction("analyzer", body));
+    if (result?.ok) {
+      if (selected?.id === analysis.id || selectedId === String(analysis.id))
+        setParams({});
+      await query.reload();
+    }
+  }
   const severity = useMemo(
     () =>
       (selected?.tracks || []).reduce(
@@ -287,20 +304,34 @@ export function AnalyzerPage() {
             <Panel title="Analysis queue" copy={`${queue.length} recent runs`}>
               <div className="queue-list">
                 {queue.map((analysis) => (
-                  <button
-                    key={analysis.id}
-                    className={selected?.id === analysis.id ? "is-active" : ""}
-                    onClick={() => setParams({ analysis: analysis.id })}
-                  >
-                    <span className="queue-file">
-                      {analysis.sourceType === "live-stream" ? "LIVE" : "MP4"}
-                    </span>
-                    <div>
-                      <strong>{analysis.name}</strong>
-                      <p>{formatDate(analysis.createdAt)}</p>
-                    </div>
-                    <StatusBadge value={analysis.status} />
-                  </button>
+                  <div key={analysis.id} className="queue-item">
+                    <button
+                      className={`queue-item__select${selected?.id === analysis.id ? " is-active" : ""}`}
+                      onClick={() => setParams({ analysis: analysis.id })}
+                    >
+                      <span className="queue-file">
+                        {analysis.sourceType === "live-stream" ? "LIVE" : "MP4"}
+                      </span>
+                      <div>
+                        <strong>{analysis.name}</strong>
+                        <p>{formatDate(analysis.createdAt)}</p>
+                      </div>
+                      <StatusBadge value={analysis.status} />
+                    </button>
+                    <button
+                      className="button button--danger queue-item__remove"
+                      onClick={() => removeAnalysis(analysis)}
+                      disabled={action.pending || analysis.status === "running"}
+                      aria-label={`Remove ${analysis.name}`}
+                      title={
+                        analysis.status === "running"
+                          ? "Stop or cancel this analysis before removing it."
+                          : `Remove ${analysis.name}`
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
                 ))}
               </div>
             </Panel>

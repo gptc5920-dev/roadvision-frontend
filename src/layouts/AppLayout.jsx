@@ -182,10 +182,6 @@ export function AppLayout() {
             shortcutEnabled={!mobile || !mobileOpen}
           />
           <div className="app-header__meta">
-            <span>
-              <Icon name="shield" size={16} />
-              Operations console
-            </span>
             <button onClick={signOut}>Sign out</button>
           </div>
         </header>

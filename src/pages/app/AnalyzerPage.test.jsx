@@ -1,15 +1,143 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
-import { useApi } from "../../hooks/useApi";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { MemoryRouter, useLocation } from "react-router-dom";
+import { useAction, useApi } from "../../hooks/useApi";
+import { submitAction } from "../../services/api";
 import { AnalyzerPage } from "./AnalyzerPage";
 
 vi.mock("../../hooks/useApi", () => ({
   useApi: vi.fn(),
-  useAction: () => ({ run: vi.fn(), pending: false, notice: null }),
+  useAction: vi.fn(),
 }));
-afterEach(cleanup);
+vi.mock("../../services/api", async (importOriginal) => ({
+  ...(await importOriginal()),
+  submitAction: vi.fn(),
+}));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  useAction.mockReturnValue({
+    run: vi.fn((callback) => callback()),
+    pending: false,
+    notice: null,
+  });
+});
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+
+function CurrentSearch() {
+  return <output data-testid="current-search">{useLocation().search}</output>;
+}
+
+function renderQueue() {
+  const analyses = [
+    { id: 1, name: "Selected survey", status: "complete" },
+    { id: 2, name: "Other survey", status: "queued" },
+    { id: 3, name: "Live survey", status: "running" },
+  ];
+  const reload = vi.fn();
+  useApi.mockReturnValue({
+    loading: false,
+    reload,
+    data: {
+      configuration: { ready: true, confidenceThreshold: 30 },
+      analyses,
+      selected: {
+        ...analyses[0],
+        processingFps: 10,
+        realtimeFactor: 1,
+        uniquePotholes: 0,
+        totalDetections: 0,
+        media: {},
+        tracks: [],
+      },
+    },
+  });
+  render(
+    <MemoryRouter initialEntries={["/app/analyzer?analysis=1"]}>
+      <AnalyzerPage />
+      <CurrentSearch />
+    </MemoryRouter>,
+  );
+  return { reload };
+}
+
+describe("analysis queue removal", () => {
+  it("confirms and removes the clicked run without changing another selection", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    submitAction.mockResolvedValue({ ok: true });
+    const { reload } = renderQueue();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove Other survey" }),
+    );
+    await waitFor(() => expect(reload).toHaveBeenCalledOnce());
+    expect(confirm.mock.calls[0][0]).toContain("Other survey");
+    const [domain, body] = submitAction.mock.calls[0];
+    expect(domain).toBe("analyzer");
+    expect(body.get("action")).toBe("remove_analysis");
+    expect(body.get("analysis_id")).toBe("2");
+    expect(screen.getByTestId("current-search").textContent).toBe(
+      "?analysis=1",
+    );
+  });
+
+  it("clears the deleted selection and reloads the queue", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    submitAction.mockResolvedValue({ ok: true });
+    const { reload } = renderQueue();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove Selected survey" }),
+    );
+    await waitFor(() => expect(reload).toHaveBeenCalledOnce());
+    expect(screen.getByTestId("current-search").textContent).toBe("");
+    expect(submitAction.mock.calls[0][1].get("analysis_id")).toBe("1");
+  });
+
+  it("keeps the run when confirmation is declined", () => {
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+    const { reload } = renderQueue();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove Other survey" }),
+    );
+    expect(submitAction).not.toHaveBeenCalled();
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it("keeps the current selection when removal fails", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    submitAction.mockResolvedValue({ ok: false });
+    const { reload } = renderQueue();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove Selected survey" }),
+    );
+    await waitFor(() => expect(submitAction).toHaveBeenCalledOnce());
+    expect(reload).not.toHaveBeenCalled();
+    expect(screen.getByTestId("current-search").textContent).toBe(
+      "?analysis=1",
+    );
+  });
+
+  it("disables removal for running analyses and during a pending action", () => {
+    renderQueue();
+    expect(
+      screen.getByRole("button", { name: "Remove Live survey" }).disabled,
+    ).toBe(true);
+    cleanup();
+    useAction.mockReturnValue({ run: vi.fn(), pending: true, notice: null });
+    renderQueue();
+    for (const button of screen.getAllByRole("button", { name: /^Remove / }))
+      expect(button.disabled).toBe(true);
+  });
+});
 
 function renderTrack(source, polygon, overrides = {}) {
   useApi.mockReturnValue({

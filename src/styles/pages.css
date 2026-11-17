@@ -668,10 +668,20 @@
   display: grid;
   gap: 5px;
 }
-.queue-list button {
+.queue-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+.queue-item__remove {
+  padding: 7px 9px;
+  font-size: var(--text-small);
+}
+.queue-item__select {
   display: grid;
   width: 100%;
-  grid-template-columns: 35px 1fr auto;
+  grid-template-columns: 35px minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
   padding: 8px;
@@ -680,8 +690,8 @@
   border: 1px solid transparent;
   border-radius: 8px;
 }
-.queue-list button:hover,
-.queue-list button.is-active {
+.queue-item__select:hover,
+.queue-item__select.is-active {
   background: var(--mint-soft);
   border-color: #c5dfd2;
 }
