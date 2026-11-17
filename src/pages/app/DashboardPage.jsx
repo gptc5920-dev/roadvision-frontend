@@ -1,10 +1,5 @@
 import { Link } from "react-router-dom";
-import {
-  PageHeader,
-  MetricCard,
-  Panel,
-  StatusBadge,
-} from "../../components/ui/Page";
+import { MetricCard, Panel, StatusBadge } from "../../components/ui/Page";
 import {
   ErrorBlock,
   LoadingBlock,
@@ -19,21 +14,14 @@ export function DashboardPage() {
   const { data, loading, error, reload } = useApi(endpoints.overview);
   return (
     <div className="page dashboard-page">
-      <PageHeader
-        eyebrow="Network overview"
-        title="Dashboard"
-        copy="Live operational picture across road reports, survey vehicles, and reviewed video defects."
-        actions={
-          <>
-            <Link className="button button--secondary" to="/app/map">
-              <Icon name="map" size={17} /> View live map
-            </Link>
-            <Link className="button button--primary" to="/app/analyzer">
-              <Icon name="upload" size={17} /> Analyze footage
-            </Link>
-          </>
-        }
-      />
+      <div className="page-header__actions page-actions">
+        <Link className="button button--secondary" to="/app/map">
+          <Icon name="map" size={17} /> View live map
+        </Link>
+        <Link className="button button--primary" to="/app/analyzer">
+          <Icon name="upload" size={17} /> Analyze footage
+        </Link>
+      </div>
       {error ? (
         <ErrorBlock message={error} onRetry={reload} />
       ) : loading ? (
@@ -80,13 +68,13 @@ export function DashboardPage() {
                 </div>
                 <Icon name="chevron" size={16} />
               </Link>
-              <Link to="/app/dispatch">
+              <Link to="/app/detections">
                 <span>
-                  <Icon name="truck" />
+                  <Icon name="alert" />
                 </span>
                 <div>
-                  <strong>Coordinate repairs</strong>
-                  <small>Manage dispatch and field response</small>
+                  <strong>Review defect inventory</strong>
+                  <small>Inspect evidence and confirm road defects</small>
                 </div>
                 <Icon name="chevron" size={16} />
               </Link>

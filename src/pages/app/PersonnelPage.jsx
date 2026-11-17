@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  PageHeader,
-  MetricCard,
-  Panel,
-  StatusBadge,
-} from "../../components/ui/Page";
+import { MetricCard, Panel, StatusBadge } from "../../components/ui/Page";
 import {
   ErrorBlock,
   LoadingBlock,
@@ -39,21 +34,16 @@ export function PersonnelPage() {
   const users = query.data?.users || [];
   return (
     <div className="page">
-      <PageHeader
-        eyebrow="Access governance"
-        title="Personnel"
-        copy="Manage approved console users and keep operational permissions explicit."
-        actions={
-          session.user?.isAdmin && (
-            <button
-              className="button button--primary"
-              onClick={() => setCreating(true)}
-            >
-              Add personnel
-            </button>
-          )
-        }
-      />
+      {session.user?.isAdmin && (
+        <div className="page-header__actions page-actions">
+          <button
+            className="button button--primary"
+            onClick={() => setCreating(true)}
+          >
+            Add personnel
+          </button>
+        </div>
+      )}
       <Notice notice={action.notice} onClose={() => action.setNotice(null)} />
       {query.error ? (
         <ErrorBlock message={query.error} onRetry={query.reload} />

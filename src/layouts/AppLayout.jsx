@@ -10,7 +10,6 @@ const primaryNav = [
   ["dashboard", "Dashboard", "dashboard"],
   ["map", "Live map", "map"],
   ["detections", "Defect inventory", "alert"],
-  ["dispatch", "Dispatch", "truck"],
   ["fleet", "Fleet cameras", "camera"],
   ["analyzer", "Video analyzer", "video"],
 ];

@@ -47,7 +47,7 @@ vi.mock("../../hooks/useApi", () => ({
 }));
 afterEach(cleanup);
 describe("map navigation", () => {
-  it("maps located incidents and opens the report and directions", async () => {
+  it("shows report details on the map and links survey defects to the inventory", async () => {
     render(
       <MemoryRouter>
         <MapPage />
@@ -57,9 +57,7 @@ describe("map navigation", () => {
       await screen.findByRole("button", { name: "Marker #7" }),
     );
     expect(screen.queryByRole("button", { name: "Marker #8" })).toBeNull();
-    expect(
-      screen.getByRole("link", { name: "Open details" }).getAttribute("href"),
-    ).toBe("/app/dispatch?report=7");
+    expect(screen.queryByRole("link", { name: "Open details" })).toBeNull();
     expect(
       screen.getByRole("link", { name: "Get directions" }).getAttribute("href"),
     ).toContain("destination=14.6%2C121");

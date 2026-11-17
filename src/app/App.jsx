@@ -8,7 +8,6 @@ import { AnalyzerPage } from "../pages/app/AnalyzerPage";
 import { DashboardPage } from "../pages/app/DashboardPage";
 import { DatasetPage } from "../pages/app/DatasetPage";
 import { DetectionsPage } from "../pages/app/DetectionsPage";
-import { DispatchPage } from "../pages/app/DispatchPage";
 import { FleetPage } from "../pages/app/FleetPage";
 import { MapPage } from "../pages/app/MapPage";
 import { PersonnelPage } from "../pages/app/PersonnelPage";
@@ -41,7 +40,6 @@ export function App() {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="map" element={<MapPage />} />
         <Route path="detections" element={<DetectionsPage />} />
-        <Route path="dispatch" element={<DispatchPage />} />
         <Route path="fleet" element={<FleetPage />} />
         <Route path="analyzer" element={<AnalyzerPage />} />
         <Route path="dataset" element={<DatasetPage />} />

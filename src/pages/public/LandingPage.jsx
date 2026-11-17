@@ -68,7 +68,7 @@ export function LandingPage() {
               <h3>Commonwealth Avenue</h3>
               <p>Review the evidence and coordinate a field response.</p>
             </article>
-            <ol aria-label="Road repair workflow">
+            <ol aria-label="Road survey workflow">
               <li>
                 <Icon name="video" size={20} />
                 <span>Analyze footage</span>
@@ -78,8 +78,8 @@ export function LandingPage() {
                 <span>Review defects</span>
               </li>
               <li>
-                <Icon name="truck" size={20} />
-                <span>Dispatch repairs</span>
+                <Icon name="map" size={20} />
+                <span>Map road defects</span>
               </li>
             </ol>
           </div>
@@ -177,11 +177,11 @@ export function LandingPage() {
           </article>
           <article>
             <span>03</span>
-            <Icon name="truck" size={26} />
-            <h3>Coordinate field response</h3>
+            <Icon name="map" size={26} />
+            <h3>Locate road defects</h3>
             <p>
-              Move confirmed defects into dispatch and keep repair priorities
-              visible across the team.
+              View confirmed defects alongside road reports on the live map and
+              open field directions.
             </p>
           </article>
         </div>

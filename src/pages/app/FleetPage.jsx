@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  PageHeader,
-  MetricCard,
-  Panel,
-  StatusBadge,
-} from "../../components/ui/Page";
+import { MetricCard, Panel, StatusBadge } from "../../components/ui/Page";
 import {
   ErrorBlock,
   LoadingBlock,
@@ -59,21 +54,16 @@ export function FleetPage() {
   }
   return (
     <div className="page">
-      <PageHeader
-        eyebrow="Connected survey network"
-        title="Fleet cameras"
-        copy="Register vehicle cameras, monitor feed health, and launch continuous road-damage analysis."
-        actions={
-          session.user?.isAdmin && (
-            <button
-              className="button button--primary"
-              onClick={() => setRegistering(true)}
-            >
-              Register camera
-            </button>
-          )
-        }
-      />
+      {session.user?.isAdmin && (
+        <div className="page-header__actions page-actions">
+          <button
+            className="button button--primary"
+            onClick={() => setRegistering(true)}
+          >
+            Register camera
+          </button>
+        </div>
+      )}
       <Notice notice={action.notice} onClose={() => action.setNotice(null)} />
       {query.error ? (
         <ErrorBlock message={query.error} onRetry={query.reload} />

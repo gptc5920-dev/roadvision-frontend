@@ -1,10 +1,5 @@
 import { useRef } from "react";
-import {
-  PageHeader,
-  MetricCard,
-  Panel,
-  StatusBadge,
-} from "../../components/ui/Page";
+import { MetricCard, Panel, StatusBadge } from "../../components/ui/Page";
 import {
   ErrorBlock,
   LoadingBlock,
@@ -30,11 +25,6 @@ export function SourcesPage() {
   }
   return (
     <div className="page">
-      <PageHeader
-        eyebrow="Survey library"
-        title="Data sources"
-        copy="Maintain reusable survey clips and road metadata for repeatable analysis workflows."
-      />
       <Notice notice={action.notice} onClose={() => action.setNotice(null)} />
       {query.error ? (
         <ErrorBlock message={query.error} onRetry={query.reload} />

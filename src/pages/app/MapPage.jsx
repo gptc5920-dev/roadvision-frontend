@@ -1,11 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  PageHeader,
-  MetricCard,
-  Panel,
-  StatusBadge,
-} from "../../components/ui/Page";
+import { MetricCard, Panel, StatusBadge } from "../../components/ui/Page";
 import {
   ErrorBlock,
   LoadingBlock,
@@ -33,7 +28,6 @@ export function MapPage() {
           ...report,
           key: `report-${report.id}`,
           code: `#${report.id}`,
-          detailUrl: `/app/dispatch?report=${report.id}`,
         })),
         ...(data?.detections || []).map((track) => ({
           ...track,
@@ -52,11 +46,6 @@ export function MapPage() {
   const selected = points.find((point) => point.key === selectedKey);
   return (
     <div className="page">
-      <PageHeader
-        eyebrow="Geospatial operations"
-        title="Live map"
-        copy="Locate road reports and GPS-tagged survey defects, inspect evidence, and open field directions."
-      />
       {error ? (
         <ErrorBlock message={error} onRetry={reload} />
       ) : loading ? (
@@ -117,12 +106,14 @@ export function MapPage() {
                     {selected.lat.toFixed(6)}, {selected.lng.toFixed(6)}
                   </p>
                   <div className="panel__actions">
-                    <Link
-                      className="button button--primary"
-                      to={selected.detailUrl}
-                    >
-                      Open details
-                    </Link>
+                    {selected.detailUrl && (
+                      <Link
+                        className="button button--primary"
+                        to={selected.detailUrl}
+                      >
+                        Open details
+                      </Link>
+                    )}
                     <a
                       className="button button--secondary"
                       href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${selected.lat},${selected.lng}`)}`}

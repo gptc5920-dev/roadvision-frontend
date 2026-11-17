@@ -1,3 +1,7 @@
+.page-actions {
+  justify-content: flex-end;
+  margin-bottom: 24px;
+}
 .dashboard-brief {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
@@ -391,60 +395,22 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.dispatch-grid,
 .device-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
-.dispatch-card .panel__body {
-  display: flex;
-  height: 100%;
-  flex-direction: column;
-}
-.dispatch-card__top,
 .device-card__heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
-.dispatch-priority {
-  padding: 4px 7px;
-  color: var(--forest-700);
-  background: var(--mint-soft);
-  border-radius: 5px;
-  font-size: var(--text-small);
-  font-weight: 800;
-  text-transform: uppercase;
-}
-.dispatch-priority--critical,
-.dispatch-priority--high {
-  color: var(--red);
-  background: var(--red-soft);
-}
-.dispatch-priority--medium {
-  color: var(--orange-dark);
-  background: var(--orange-soft);
-}
-.dispatch-card h3 {
-  margin: 18px 0 6px;
-  font-family: var(--display);
-  font-size: 0.98rem;
-}
-.dispatch-card > .panel__body > p {
-  min-height: 40px;
-  color: var(--muted);
-  font-size: var(--text-small);
-  line-height: 1.5;
-}
-.dispatch-card dl,
 .device-card dl {
   display: grid;
   gap: 7px;
   margin: 15px 0;
 }
-.dispatch-card dl > div,
 .device-card dl > div,
 .key-values > div {
   display: flex;
@@ -454,12 +420,10 @@
   border-bottom: 1px solid var(--line);
   font-size: var(--text-small);
 }
-.dispatch-card dt,
 .device-card dt,
 .key-values dt {
   color: var(--muted);
 }
-.dispatch-card dd,
 .device-card dd,
 .key-values dd {
   margin: 0;
@@ -467,7 +431,6 @@
   font-weight: 600;
   text-align: right;
 }
-.dispatch-card__actions,
 .device-card__actions {
   display: flex;
   flex-wrap: wrap;

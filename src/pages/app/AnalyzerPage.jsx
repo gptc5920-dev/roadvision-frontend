@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "../../components/icons/Icon";
 import {
-  PageHeader,
   MetricCard,
   Panel,
   ProgressBar,
@@ -87,20 +86,15 @@ export function AnalyzerPage() {
 
   return (
     <div className="page page--wide">
-      <PageHeader
-        eyebrow="AI-assisted road survey"
-        title="Video analyzer"
-        copy="Upload, process, review, and export road-condition footage without leaving the operations console."
-        actions={
-          <button
-            className="button button--primary"
-            onClick={() => setUploading(true)}
-          >
-            <Icon name="upload" size={17} />
-            Upload and analyze
-          </button>
-        }
-      />
+      <div className="page-header__actions page-actions">
+        <button
+          className="button button--primary"
+          onClick={() => setUploading(true)}
+        >
+          <Icon name="upload" size={17} />
+          Upload and analyze
+        </button>
+      </div>
       <Notice notice={action.notice} onClose={() => action.setNotice(null)} />
       {query.error ? (
         <ErrorBlock message={query.error} onRetry={query.reload} />

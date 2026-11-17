@@ -1,5 +1,5 @@
 import { ValidatedForm, PresetNumber } from "../../components/ui/ValidatedForm";
-import { PageHeader, Panel, StatusBadge } from "../../components/ui/Page";
+import { Panel, StatusBadge } from "../../components/ui/Page";
 import { ErrorBlock, LoadingBlock, Notice } from "../../components/ui/Feedback";
 import { useSession } from "../../app/SessionContext";
 import { useAction, useApi } from "../../hooks/useApi";
@@ -43,11 +43,6 @@ export function SettingsPage() {
   }
   return (
     <div className="page">
-      <PageHeader
-        eyebrow="System configuration"
-        title="Settings"
-        copy="Control active models, analyzer defaults, and your console profile."
-      />
       <Notice notice={action.notice} onClose={() => action.setNotice(null)} />
       {query.error ? (
         <ErrorBlock message={query.error} onRetry={query.reload} />

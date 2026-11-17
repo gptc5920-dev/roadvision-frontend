@@ -22,7 +22,7 @@ describe("API client", () => {
   it("maps action domains to their Django endpoints", () => {
     expect(actionEndpoint("analyzer")).toBe("/api/actions/analyzer/");
     expect(actionEndpoint("dataset")).toBe("/api/actions/dataset/");
-    expect(actionEndpoint("dispatch")).toBe("/api/actions/modules/dispatch/");
+    expect(actionEndpoint("live-map")).toBe("/api/actions/modules/live-map/");
   });
 
   it("serializes object bodies and sends the rotated CSRF token", async () => {

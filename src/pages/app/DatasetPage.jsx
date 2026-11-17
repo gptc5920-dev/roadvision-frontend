@@ -4,7 +4,6 @@ import { MaskEditor, MaskOverlay } from "../../components/ui/MaskEditor";
 import { useSearchParams } from "react-router-dom";
 import { Icon } from "../../components/icons/Icon";
 import {
-  PageHeader,
   MetricCard,
   Panel,
   ProgressBar,
@@ -98,11 +97,6 @@ export function DatasetPage() {
 
   return (
     <div className="page page--wide">
-      <PageHeader
-        eyebrow="Model improvement"
-        title="Training dataset"
-        copy="Upload road imagery, refine segmentation masks, approve ground truth, and monitor model training."
-      />
       <Notice notice={action.notice} onClose={() => action.setNotice(null)} />
       {query.error ? (
         <ErrorBlock message={query.error} onRetry={query.reload} />
