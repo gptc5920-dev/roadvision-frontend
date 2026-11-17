@@ -62,6 +62,11 @@ function renderQueue() {
     reload,
     data: {
       configuration: { ready: true, confidenceThreshold: 30 },
+      report: { id: 7, city: "Manila", deviceId: "CAM-01" },
+      reports: [
+        { id: 7, city: "Manila", deviceId: "CAM-01" },
+        { id: 8, city: "Cavite", deviceId: "CAM-02" },
+      ],
       analyses,
       selected: {
         ...analyses[0],
@@ -82,6 +87,140 @@ function renderQueue() {
   );
   return { reload };
 }
+
+describe("analysis notifications", () => {
+  it("floats queued messages outside the page and supports dismissal", () => {
+    const setNotice = vi.fn();
+    useAction.mockReturnValue({
+      pending: false,
+      notice: {
+        level: "success",
+        text: "Video analysis queued for Pothole testing.mp4.",
+      },
+      setNotice,
+    });
+    renderQueue();
+
+    const notification = screen
+      .getByText("Video analysis queued for Pothole testing.mp4.")
+      .closest('[role="status"]');
+    expect(notification.closest(".toast").parentElement).toBe(document.body);
+    expect(notification.closest(".page")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(setNotice).toHaveBeenCalledWith(null);
+  });
+
+  it("keeps feedback inside the open upload dialog without a duplicate toast", () => {
+    useAction.mockReturnValue({
+      pending: false,
+      notice: { level: "error", text: "Please choose a video file." },
+    });
+    renderQueue();
+    fireEvent.click(screen.getByRole("button", { name: "Upload and analyze" }));
+
+    expect(screen.getAllByText("Please choose a video file.")).toHaveLength(1);
+    expect(screen.getByRole("status").closest('[role="dialog"]')).toBeTruthy();
+    expect(document.querySelector(".toast")).toBeNull();
+  });
+});
+
+describe("report-specific analysis", () => {
+  it("keeps another report's stale results hidden while switching reports", () => {
+    renderQueue();
+    fireEvent.change(screen.getByLabelText("Report"), {
+      target: { value: "8" },
+    });
+    expect(screen.getByTestId("current-search").textContent).toBe("?report=8");
+    expect(useApi.mock.calls.at(-1)[0]).toBe("/api/analyzer/?report=8");
+    expect(
+      screen.queryByRole("heading", { name: "Selected survey" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Upload and analyze" }).disabled,
+    ).toBe(true);
+  });
+
+  it("keeps queue navigation within the selected report", () => {
+    renderQueue();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Other survey.*queued/i }),
+    );
+    expect(screen.getByTestId("current-search").textContent).toBe(
+      "?report=7&analysis=2",
+    );
+    expect(useApi.mock.calls.at(-1)[0]).toBe(
+      "/api/analyzer/?report=7&analysis=2",
+    );
+  });
+
+  it("clears the report context immediately when returning to the report picker", () => {
+    renderQueue();
+    fireEvent.change(screen.getByLabelText("Report"), {
+      target: { value: "" },
+    });
+    expect(screen.getByTestId("current-search").textContent).toBe("");
+    expect(
+      screen.queryByRole("heading", { name: "Selected survey" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Upload and analyze" }).disabled,
+    ).toBe(true);
+  });
+
+  it("requires a report before allowing uploads or camera captures", () => {
+    useApi.mockReturnValue({
+      loading: false,
+      data: {
+        report: null,
+        reports: [],
+        analyses: [],
+        unassignedAnalyses: [],
+        selected: null,
+        configuration: { ready: true },
+      },
+    });
+    render(
+      <MemoryRouter>
+        <AnalyzerPage />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByRole("button", { name: "Upload and analyze" }).disabled,
+    ).toBe(true);
+    expect(
+      screen.getByText("Create a road report to start analysis."),
+    ).toBeTruthy();
+  });
+
+  it("creates a report and opens its analyzer context", async () => {
+    renderQueue();
+    fireEvent.click(screen.getByRole("button", { name: "New report" }));
+    for (const [name, value] of [
+      ["City", "Laguna"],
+      ["Source device ID", "PHONE-01"],
+      ["Latitude", "14.4"],
+      ["Longitude", "121.2"],
+    ])
+      fireEvent.change(screen.getByLabelText(name), { target: { value } });
+    submitAction.mockResolvedValue({
+      ok: true,
+      redirect: "/app/analyzer?report=55",
+    });
+    fireEvent.submit(
+      screen.getByRole("button", { name: "Create report" }).closest("form"),
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("current-search").textContent).toBe(
+        "?report=55",
+      ),
+    );
+    const body = submitAction.mock.calls[0][1];
+    expect(body.get("action")).toBe("create_report");
+    expect(body.get("city")).toBe("Laguna");
+    expect(body.get("device_id")).toBe("PHONE-01");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
 
 describe("analysis queue removal", () => {
   it("confirms and removes the clicked run without changing another selection", async () => {
@@ -110,7 +249,7 @@ describe("analysis queue removal", () => {
       screen.getByRole("button", { name: "Remove Selected survey" }),
     );
     await waitFor(() => expect(reload).toHaveBeenCalledOnce());
-    expect(screen.getByTestId("current-search").textContent).toBe("");
+    expect(screen.getByTestId("current-search").textContent).toBe("?report=7");
     expect(submitAction.mock.calls[0][1].get("analysis_id")).toBe("1");
   });
 
@@ -175,6 +314,7 @@ describe("analyzer camera sources", () => {
       expect(domain).toBe("analyzer");
       expect(body.get("source_type")).toBe("webcam");
       expect(body.get("camera_source")).toBe(kind);
+      expect(body.get("report_id")).toBe("7");
       expect(body.get("video").name).toBe(`${kind}.webm`);
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     },
@@ -253,6 +393,7 @@ function renderTrack(source, polygon, overrides = {}) {
       configuration: { ready: true, confidenceThreshold: 30 },
       analyses: [],
       selected: {
+        id: 1,
         status: "complete",
         name: "Road survey",
         processingFps: 10,
@@ -279,7 +420,7 @@ function renderTrack(source, polygon, overrides = {}) {
     },
   });
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={["/app/analyzer?analysis=1"]}>
       <AnalyzerPage />
     </MemoryRouter>,
   );

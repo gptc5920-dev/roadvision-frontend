@@ -11,7 +11,7 @@ import {
   ErrorBlock,
   LoadingBlock,
   EmptyState,
-  Notice,
+  Toast,
 } from "../../components/ui/Feedback";
 import { Modal } from "../../components/ui/Modal";
 import { TrackPreview } from "../../components/ui/TrackPreview";
@@ -26,7 +26,11 @@ export function AnalyzerPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const selectedId = params.get("analysis");
-  const path = `${endpoints.analyzer}${selectedId ? `?analysis=${selectedId}` : ""}`;
+  const reportId = params.get("report");
+  const queryParams = new URLSearchParams();
+  if (reportId) queryParams.set("report", reportId);
+  if (selectedId) queryParams.set("analysis", selectedId);
+  const path = `${endpoints.analyzer}${queryParams.size ? `?${queryParams}` : ""}`;
   const query = useApi(path, {
     interval: 4000,
     pollWhen: (data) =>
@@ -34,6 +38,7 @@ export function AnalyzerPage() {
   });
   const action = useAction();
   const [uploading, setUploading] = useState(false);
+  const [creatingReport, setCreatingReport] = useState(false);
   const [sourceType, setSourceType] = useState("upload");
   const [dashcamInput, setDashcamInput] = useState("file");
   const [capturedFile, setCapturedFile] = useState(null);
@@ -43,7 +48,24 @@ export function AnalyzerPage() {
   const useStream =
     sourceType === "live-stream" ||
     (sourceType === "dashcam" && dashcamInput === "stream");
-  const selected = query.data?.selected;
+  const changingReport = Boolean(
+    query.data &&
+    (reportId
+      ? String(query.data.report?.id) !== reportId
+      : !selectedId && Boolean(query.data.report || query.data.selected)),
+  );
+  const changingAnalysis = Boolean(
+    selectedId && query.data && String(query.data.selected?.id) !== selectedId,
+  );
+  const report = changingReport ? null : query.data?.report;
+  const selected =
+    changingReport || changingAnalysis ? null : query.data?.selected;
+  const reports = query.data?.reports || [];
+  const reportChoices =
+    report && !reports.some((item) => item.id === report.id)
+      ? [report, ...reports]
+      : reports;
+  const reportParams = report ? { report: String(report.id) } : {};
   const source =
     selected?.media.processed ||
     selected?.media.original ||
@@ -52,11 +74,15 @@ export function AnalyzerPage() {
     selected?.media.live &&
     !selected?.media.processed &&
     !selected?.media.original;
-  const queue = query.data?.analyses || [];
+  const unassigned = !report && !selected;
+  const queue = unassigned
+    ? query.data?.unassignedAnalyses || []
+    : query.data?.analyses || [];
   const configuredConfidence =
     query.data?.configuration.confidenceThreshold || 30;
 
   function openUpload() {
+    if (!report || query.loading || changingReport || changingAnalysis) return;
     setCapturedFile(null);
     setUploading(true);
   }
@@ -64,11 +90,23 @@ export function AnalyzerPage() {
     setCapturedFile(null);
     setUploading(false);
   }
+  async function createReport(event) {
+    event.preventDefault();
+    const body = new FormData(event.currentTarget);
+    body.set("action", "create_report");
+    const result = await action.run(() => submitAction("analyzer", body));
+    if (result?.ok) {
+      setCreatingReport(false);
+      if (result.redirect) navigate(result.redirect);
+    }
+  }
 
   async function upload(event) {
     event.preventDefault();
+    if (!report) return;
     const body = new FormData(event.currentTarget);
     body.set("action", "upload_video");
+    body.set("report_id", report.id);
     body.set(
       "source_type",
       useStream
@@ -98,13 +136,14 @@ export function AnalyzerPage() {
       }
       const refreshed = await query.reload();
       if (refreshed?.analyses?.[0])
-        setParams({ analysis: refreshed.analyses[0].id });
+        setParams({ ...reportParams, analysis: refreshed.analyses[0].id });
     }
   }
   async function runAction(name, extra = {}) {
     const body = new FormData();
     body.set("action", name);
     body.set("analysis_id", selected.id);
+    if (report) body.set("report_id", report.id);
     Object.entries(extra).forEach(([key, value]) => body.set(key, value));
     const result = await action.run(() => submitAction("analyzer", body));
     if (result?.ok) await query.reload();
@@ -119,10 +158,11 @@ export function AnalyzerPage() {
     const body = new FormData();
     body.set("action", "remove_analysis");
     body.set("analysis_id", analysis.id);
+    if (report) body.set("report_id", report.id);
     const result = await action.run(() => submitAction("analyzer", body));
     if (result?.ok) {
       if (selected?.id === analysis.id || selectedId === String(analysis.id))
-        setParams({});
+        setParams(reportParams);
       await query.reload();
     }
   }
@@ -141,15 +181,55 @@ export function AnalyzerPage() {
   return (
     <div className="page page--wide">
       <div className="page-header__actions page-actions">
-        <button className="button button--primary" onClick={openUpload}>
+        <label className="analysis-report-picker">
+          Report
+          <select
+            value={reportId || report?.id || ""}
+            disabled={action.pending}
+            onChange={(event) => {
+              closeUpload();
+              setParams(
+                event.target.value ? { report: event.target.value } : {},
+              );
+            }}
+          >
+            <option value="">Select a report</option>
+            {reportChoices.map((item) => (
+              <option key={item.id} value={item.id}>
+                #{item.id} · {item.city || "Road report"} · {item.deviceId}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="button button--secondary"
+          disabled={action.pending}
+          onClick={() => setCreatingReport(true)}
+        >
+          New report
+        </button>
+        <button
+          className="button button--primary"
+          onClick={openUpload}
+          disabled={
+            !report ||
+            action.pending ||
+            changingReport ||
+            changingAnalysis ||
+            query.loading
+          }
+        >
           <Icon name="upload" size={17} />
           Upload and analyze
         </button>
       </div>
-      <Notice notice={action.notice} onClose={() => action.setNotice(null)} />
+      <Toast
+        notice={uploading || creatingReport ? null : action.notice}
+        onClose={() => action.setNotice(null)}
+      />
       {query.error ? (
         <ErrorBlock message={query.error} onRetry={query.reload} />
-      ) : query.loading ? (
+      ) : query.loading || changingReport || changingAnalysis ? (
         <LoadingBlock />
       ) : (
         <div className="analyzer-layout">
@@ -321,27 +401,48 @@ export function AnalyzerPage() {
             ) : (
               <EmptyState
                 icon="video"
-                title="No analysis selected"
-                copy="Upload a video or select a run from the queue."
+                title={
+                  report
+                    ? `No analysis for report #${report.id}`
+                    : "Select a report"
+                }
+                copy={
+                  report
+                    ? "Upload footage, enter a stream URL, or record a camera clip for this report."
+                    : reports.length
+                      ? "Choose a report above to view its analyses or start a new run."
+                      : "Create a road report to start analysis."
+                }
                 action={
-                  <button
-                    className="button button--primary"
-                    onClick={openUpload}
-                  >
-                    Upload footage
-                  </button>
+                  report && (
+                    <button
+                      className="button button--primary"
+                      onClick={openUpload}
+                    >
+                      Upload footage
+                    </button>
+                  )
                 }
               />
             )}
           </section>
           <aside className="analyzer-queue">
-            <Panel title="Analysis queue" copy={`${queue.length} recent runs`}>
+            <Panel
+              title={unassigned ? "Unassigned runs" : "Analysis queue"}
+              copy={
+                report
+                  ? `${queue.length} runs for report #${report.id}`
+                  : `${queue.length} runs without a linked report`
+              }
+            >
               <div className="queue-list">
                 {queue.map((analysis) => (
                   <div key={analysis.id} className="queue-item">
                     <button
                       className={`queue-item__select${selected?.id === analysis.id ? " is-active" : ""}`}
-                      onClick={() => setParams({ analysis: analysis.id })}
+                      onClick={() =>
+                        setParams({ ...reportParams, analysis: analysis.id })
+                      }
                     >
                       <span className="queue-file">
                         {analysis.sourceType === "live-stream" ? "LIVE" : "MP4"}
@@ -401,13 +502,90 @@ export function AnalyzerPage() {
         </div>
       )}
       <Modal
+        open={creatingReport}
+        onClose={() => setCreatingReport(false)}
+        title="New road report"
+        copy="Add the incident location and source, then attach video footage or a camera capture."
+        pending={action.pending}
+        notice={action.notice}
+        fields={action.fields}
+      >
+        <form className="form modal-form" onSubmit={createReport}>
+          <div className="form-grid">
+            <label>
+              City
+              <input name="city" maxLength="120" required />
+            </label>
+            <label>
+              Source device ID
+              <input name="device_id" maxLength="80" required />
+            </label>
+            <label>
+              Latitude
+              <input
+                type="number"
+                name="lat"
+                min="-90"
+                max="90"
+                step="any"
+                required
+              />
+            </label>
+            <label>
+              Longitude
+              <input
+                type="number"
+                name="lng"
+                min="-180"
+                max="180"
+                step="any"
+                required
+              />
+            </label>
+            <label>
+              Reported severity
+              <select name="severity" defaultValue="low">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </label>
+            <label className="span-2">
+              Notes
+              <textarea name="notes" maxLength="2000" rows="3" />
+            </label>
+          </div>
+          <footer>
+            <button
+              type="button"
+              className="button button--secondary"
+              disabled={action.pending}
+              onClick={() => setCreatingReport(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="button button--primary"
+              disabled={action.pending}
+            >
+              {action.pending ? "Creating…" : "Create report"}
+            </button>
+          </footer>
+        </form>
+      </Modal>
+      <Modal
         pending={action.pending}
         notice={action.notice}
         fields={action.fields}
         open={uploading}
         onClose={closeUpload}
         title="Upload and analyze"
-        copy="Add survey footage and enough route context for engineering review."
+        copy={
+          report
+            ? `Add footage to report #${report.id}${report.city ? ` — ${report.city}` : ""}.`
+            : "Select a report before adding footage."
+        }
         wide
       >
         <form className="form modal-form" onSubmit={upload}>

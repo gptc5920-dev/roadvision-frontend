@@ -28,6 +28,7 @@ export function MapPage() {
           ...report,
           key: `report-${report.id}`,
           code: `#${report.id}`,
+          detailUrl: `/app/analyzer?report=${report.id}`,
         })),
         ...(data?.detections || []).map((track) => ({
           ...track,

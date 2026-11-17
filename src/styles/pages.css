@@ -2,6 +2,16 @@
   justify-content: flex-end;
   margin-bottom: 24px;
 }
+.analysis-report-picker {
+  display: grid;
+  flex: 1;
+  min-width: min(100%, 220px);
+  max-width: 560px;
+  gap: 6px;
+  margin-right: auto;
+  font-size: var(--text-small);
+  font-weight: 600;
+}
 .dashboard-brief {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);

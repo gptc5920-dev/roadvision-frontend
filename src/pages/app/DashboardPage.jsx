@@ -154,6 +154,12 @@ export function DashboardPage() {
                       <div>
                         <strong>{report.city}</strong>
                         <p>{report.notes || report.deviceId}</p>
+                        <Link
+                          className="text-link"
+                          to={`/app/analyzer?report=${report.id}`}
+                        >
+                          Open video analysis
+                        </Link>
                       </div>
                       <div>
                         <StatusBadge value={report.status} />

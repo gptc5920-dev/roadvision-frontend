@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { Icon } from "../icons/Icon";
 
@@ -45,6 +46,15 @@ export function Notice({ notice, onClose }) {
         </button>
       )}
     </div>
+  );
+}
+export function Toast({ notice, onClose }) {
+  if (!notice) return null;
+  return createPortal(
+    <div className="toast">
+      <Notice notice={notice} onClose={onClose} />
+    </div>,
+    document.body,
   );
 }
 export function EmptyState({

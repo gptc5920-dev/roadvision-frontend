@@ -57,7 +57,9 @@ describe("map navigation", () => {
       await screen.findByRole("button", { name: "Marker #7" }),
     );
     expect(screen.queryByRole("button", { name: "Marker #8" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Open details" })).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Open details" }).getAttribute("href"),
+    ).toBe("/app/analyzer?report=7");
     expect(
       screen.getByRole("link", { name: "Get directions" }).getAttribute("href"),
     ).toContain("destination=14.6%2C121");
