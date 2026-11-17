@@ -8,10 +8,18 @@ import {
   Notice,
 } from "../../components/ui/Feedback";
 import { Modal } from "../../components/ui/Modal";
+import { CameraCapture } from "../../components/ui/CameraCapture";
 import { useSession } from "../../app/SessionContext";
 import { useAction, useApi } from "../../hooks/useApi";
 import { endpoints, submitAction } from "../../services/api";
 import { formatDate, formatNumber } from "../../utils/format";
+
+const cameraLabels = {
+  stream: "Stream URL",
+  dashcam: "Dashcam",
+  laptop: "Laptop camera",
+  mobile: "Mobile camera",
+};
 
 export function FleetPage() {
   const navigate = useNavigate();
@@ -19,6 +27,10 @@ export function FleetPage() {
   const query = useApi(endpoints.fleet, { interval: 5000 });
   const action = useAction(query.reload);
   const [registering, setRegistering] = useState(false);
+  const [cameraSource, setCameraSource] = useState("stream");
+  const [capturing, setCapturing] = useState(null);
+  const [capturedFile, setCapturedFile] = useState(null);
+  const [captureInput, setCaptureInput] = useState("camera");
   const devices = query.data?.devices || [];
   const online = devices.filter((device) => device.status === "online").length;
   async function submit(body) {
@@ -51,6 +63,28 @@ export function FleetPage() {
     body.set("device_id", device.id);
     body.set("analysis_id", device.activeAnalysis.id);
     await submit(body);
+  }
+  async function sendCapture(event) {
+    event.preventDefault();
+    const body = new FormData(event.currentTarget);
+    body.set("action", "analyze_fleet_capture");
+    body.set("device_id", capturing.id);
+    body.set(
+      "camera_source",
+      ["laptop", "mobile"].includes(capturing.cameraSource)
+        ? capturing.cameraSource
+        : "dashcam",
+    );
+    if (captureInput === "camera") {
+      if (!capturedFile) return;
+      body.set("video", capturedFile, capturedFile.name);
+    }
+    const result = await submit(body);
+    if (result?.ok) {
+      setCapturing(null);
+      setCapturedFile(null);
+      if (result.redirect) navigate(result.redirect);
+    }
   }
   return (
     <div className="page">
@@ -109,6 +143,12 @@ export function FleetPage() {
                   </div>
                   <dl>
                     <div>
+                      <dt>Camera source</dt>
+                      <dd>
+                        {cameraLabels[device.cameraSource] || "Stream URL"}
+                      </dd>
+                    </div>
+                    <div>
                       <dt>Road section</dt>
                       <dd>{device.roadSection || "Not assigned"}</dd>
                     </div>
@@ -146,7 +186,7 @@ export function FleetPage() {
                     <p className="device-card__source">
                       {device.hasStream
                         ? "Stream source configured"
-                        : "No stream URL configured"}
+                        : "Capture footage from a connected camera or upload a clip"}
                     </p>
                   )}
                   <div className="device-card__actions">
@@ -167,7 +207,7 @@ export function FleetPage() {
                       >
                         Stop detection
                       </button>
-                    ) : (
+                    ) : device.hasStream ? (
                       <button
                         className="button button--primary"
                         onClick={() => analyze(device)}
@@ -179,7 +219,20 @@ export function FleetPage() {
                       >
                         Start detection
                       </button>
-                    )}
+                    ) : null}
+                    <button
+                      className="button button--secondary"
+                      onClick={() => {
+                        setCapturedFile(null);
+                        setCaptureInput("camera");
+                        setCapturing(device);
+                      }}
+                      disabled={action.pending || device.status !== "online"}
+                    >
+                      {device.cameraSource === "dashcam"
+                        ? "Capture dashcam clip"
+                        : "Open camera"}
+                    </button>
                   </div>
                 </Panel>
               ))
@@ -214,7 +267,7 @@ export function FleetPage() {
         open={registering}
         onClose={() => setRegistering(false)}
         title="Register fleet camera"
-        copy="Use a stable device ID and a trusted stream endpoint."
+        copy="Choose a Stream URL, dashcam, laptop camera, or mobile camera."
       >
         <form className="form modal-form" onSubmit={register}>
           <div className="form-grid">
@@ -250,15 +303,41 @@ export function FleetPage() {
               </select>
             </label>
             <label className="span-2">
-              Stream URL
-              <input
-                name="stream_url"
-                placeholder="rtsp://camera-host/feed"
-                maxLength="500"
-                pattern="(rtsp|http|https)://.+"
-                title="Use an RTSP, HTTP, or HTTPS stream URL without embedded credentials."
-              />
+              Camera source
+              <select
+                name="camera_source"
+                value={cameraSource}
+                onChange={(event) => setCameraSource(event.target.value)}
+              >
+                {Object.entries(cameraLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
             </label>
+            {["stream", "dashcam"].includes(cameraSource) ? (
+              <label className="span-2">
+                Stream URL
+                <input
+                  name="stream_url"
+                  placeholder="rtsp://camera-host/feed"
+                  maxLength="500"
+                  pattern="(rtsp|http|https)://.+"
+                  title="Use an RTSP, HTTP, or HTTPS stream URL without embedded credentials."
+                />
+                <small>
+                  {cameraSource === "dashcam"
+                    ? "Optional network feed. You can also record from a USB dashcam or upload its clips."
+                    : "Use a feed reachable from the analysis server."}
+                </small>
+              </label>
+            ) : (
+              <p className="span-2">
+                Save this camera, then choose Open camera on this device to
+                preview and record a clip.
+              </p>
+            )}
             <label>
               Road section
               <input name="road_section" maxLength="180" />
@@ -304,6 +383,85 @@ export function FleetPage() {
             </button>
           </footer>
         </form>
+      </Modal>
+      <Modal
+        open={Boolean(capturing)}
+        onClose={() => {
+          setCapturing(null);
+          setCapturedFile(null);
+        }}
+        title={
+          capturing ? `Capture — ${capturing.name}` : "Capture camera clip"
+        }
+        copy="Record a clip on this device or select an existing camera video."
+        pending={action.pending}
+        notice={action.notice}
+        fields={action.fields}
+        wide
+      >
+        {capturing && (
+          <form className="form modal-form" onSubmit={sendCapture}>
+            <label>
+              Capture input
+              <select
+                value={captureInput}
+                onChange={(event) => {
+                  setCaptureInput(event.target.value);
+                  setCapturedFile(null);
+                }}
+                disabled={action.pending}
+              >
+                <option value="camera">Record from camera</option>
+                <option value="file">Upload recorded clip</option>
+              </select>
+            </label>
+            {captureInput === "camera" ? (
+              <CameraCapture
+                kind={
+                  capturing.cameraSource === "mobile"
+                    ? "mobile"
+                    : capturing.cameraSource === "laptop"
+                      ? "laptop"
+                      : "dashcam"
+                }
+                onChange={setCapturedFile}
+                disabled={action.pending}
+              />
+            ) : (
+              <label>
+                Camera video
+                <input
+                  type="file"
+                  name="video"
+                  accept=".mp4,.mov,.avi,.mkv,.webm"
+                  required
+                  disabled={action.pending}
+                />
+              </label>
+            )}
+            <footer>
+              <button
+                type="button"
+                className="button button--secondary"
+                disabled={action.pending}
+                onClick={() => {
+                  setCapturing(null);
+                  setCapturedFile(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="button button--primary"
+                disabled={
+                  action.pending || (captureInput === "camera" && !capturedFile)
+                }
+              >
+                {action.pending ? "Sending…" : "Analyze clip"}
+              </button>
+            </footer>
+          </form>
+        )}
       </Modal>
     </div>
   );

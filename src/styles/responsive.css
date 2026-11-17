@@ -1,7 +1,4 @@
 @media (max-width: 1180px) {
-  .app-header__location {
-    display: none;
-  }
   .map-layout,
   .analyzer-layout,
   .sources-layout,

@@ -20,6 +20,18 @@ vi.mock("../../services/api", async (importOriginal) => ({
   ...(await importOriginal()),
   submitAction: vi.fn(),
 }));
+vi.mock("../../components/ui/CameraCapture", () => ({
+  CameraCapture: ({ kind, onChange }) => (
+    <button
+      type="button"
+      onClick={() =>
+        onChange(new File(["clip"], `${kind}.webm`, { type: "video/webm" }))
+      }
+    >
+      Record test clip
+    </button>
+  ),
+}));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -136,6 +148,100 @@ describe("analysis queue removal", () => {
     renderQueue();
     for (const button of screen.getAllByRole("button", { name: /^Remove / }))
       expect(button.disabled).toBe(true);
+  });
+});
+
+describe("analyzer camera sources", () => {
+  it.each(["laptop", "mobile"])(
+    "submits a recorded %s camera clip with the right source",
+    async (kind) => {
+      renderQueue();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Upload and analyze" }),
+      );
+      fireEvent.change(screen.getByLabelText("Footage source"), {
+        target: { value: kind },
+      });
+      expect(
+        screen.getByRole("button", { name: "Start analysis" }).disabled,
+      ).toBe(true);
+      fireEvent.click(screen.getByRole("button", { name: "Record test clip" }));
+      const submit = screen.getByRole("button", { name: "Start analysis" });
+      expect(submit.disabled).toBe(false);
+      submitAction.mockResolvedValue({ ok: true });
+      fireEvent.submit(submit.closest("form"));
+      await waitFor(() => expect(submitAction).toHaveBeenCalledOnce());
+      const [domain, body] = submitAction.mock.calls[0];
+      expect(domain).toBe("analyzer");
+      expect(body.get("source_type")).toBe("webcam");
+      expect(body.get("camera_source")).toBe(kind);
+      expect(body.get("video").name).toBe(`${kind}.webm`);
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    },
+  );
+
+  it.each(["live-stream", "dashcam"])(
+    "supports a Stream URL for %s",
+    async (kind) => {
+      renderQueue();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Upload and analyze" }),
+      );
+      fireEvent.change(screen.getByLabelText("Footage source"), {
+        target: { value: kind },
+      });
+      if (kind === "dashcam")
+        fireEvent.change(screen.getByLabelText("Dashcam input"), {
+          target: { value: "stream" },
+        });
+      fireEvent.change(screen.getByLabelText(/Stream URL/), {
+        target: { value: "rtsp://camera.example.com/feed" },
+      });
+      submitAction.mockResolvedValue({ ok: true });
+      fireEvent.submit(
+        screen.getByRole("button", { name: "Start analysis" }).closest("form"),
+      );
+      await waitFor(() => expect(submitAction).toHaveBeenCalledOnce());
+      const body = submitAction.mock.calls[0][1];
+      expect(body.get("source_type")).toBe("live-stream");
+      expect(body.get("stream_url")).toBe("rtsp://camera.example.com/feed");
+      expect(body.has("video")).toBe(false);
+    },
+  );
+
+  it("records from a USB dashcam and submits it as dashcam footage", async () => {
+    renderQueue();
+    fireEvent.click(screen.getByRole("button", { name: "Upload and analyze" }));
+    fireEvent.change(screen.getByLabelText("Footage source"), {
+      target: { value: "dashcam" },
+    });
+    fireEvent.change(screen.getByLabelText("Dashcam input"), {
+      target: { value: "camera" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Record test clip" }));
+    submitAction.mockResolvedValue({ ok: true });
+    fireEvent.submit(
+      screen.getByRole("button", { name: "Start analysis" }).closest("form"),
+    );
+    await waitFor(() => expect(submitAction).toHaveBeenCalledOnce());
+    expect(submitAction.mock.calls[0][1].get("source_type")).toBe("dashcam");
+    expect(submitAction.mock.calls[0][1].get("video").name).toBe(
+      "dashcam.webm",
+    );
+  });
+
+  it("discards the previous clip when the upload dialog is reopened", () => {
+    renderQueue();
+    fireEvent.click(screen.getByRole("button", { name: "Upload and analyze" }));
+    fireEvent.change(screen.getByLabelText("Footage source"), {
+      target: { value: "mobile" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Record test clip" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Upload and analyze" }));
+    expect(
+      screen.getByRole("button", { name: "Start analysis" }).disabled,
+    ).toBe(true);
   });
 });
 

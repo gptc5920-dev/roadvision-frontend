@@ -33,7 +33,6 @@ export function DashboardPage() {
             aria-labelledby="dashboard-brief-title"
           >
             <div className="dashboard-brief__copy">
-              <span className="dashboard-brief__eyebrow">Your next step</span>
               <h2 id="dashboard-brief-title">
                 {data.metrics.unresolvedDefects > 0
                   ? `${formatNumber(data.metrics.unresolvedDefects)} defects ready for review`

@@ -15,6 +15,7 @@ import {
 } from "../../components/ui/Feedback";
 import { Modal } from "../../components/ui/Modal";
 import { TrackPreview } from "../../components/ui/TrackPreview";
+import { CameraCapture } from "../../components/ui/CameraCapture";
 import { useAction, useApi } from "../../hooks/useApi";
 import { endpoints, submitAction } from "../../services/api";
 import { formatDate, formatDuration, formatPercent } from "../../utils/format";
@@ -34,6 +35,14 @@ export function AnalyzerPage() {
   const action = useAction();
   const [uploading, setUploading] = useState(false);
   const [sourceType, setSourceType] = useState("upload");
+  const [dashcamInput, setDashcamInput] = useState("file");
+  const [capturedFile, setCapturedFile] = useState(null);
+  const useCamera =
+    ["laptop", "mobile"].includes(sourceType) ||
+    (sourceType === "dashcam" && dashcamInput === "camera");
+  const useStream =
+    sourceType === "live-stream" ||
+    (sourceType === "dashcam" && dashcamInput === "stream");
   const selected = query.data?.selected;
   const source =
     selected?.media.processed ||
@@ -47,13 +56,41 @@ export function AnalyzerPage() {
   const configuredConfidence =
     query.data?.configuration.confidenceThreshold || 30;
 
+  function openUpload() {
+    setCapturedFile(null);
+    setUploading(true);
+  }
+  function closeUpload() {
+    setCapturedFile(null);
+    setUploading(false);
+  }
+
   async function upload(event) {
     event.preventDefault();
     const body = new FormData(event.currentTarget);
     body.set("action", "upload_video");
+    body.set(
+      "source_type",
+      useStream
+        ? "live-stream"
+        : sourceType === "dashcam"
+          ? "dashcam"
+          : useCamera
+            ? "webcam"
+            : "upload",
+    );
+    if (sourceType !== "upload")
+      body.set(
+        "camera_source",
+        sourceType === "live-stream" ? "stream" : sourceType,
+      );
+    if (useCamera) {
+      if (!capturedFile) return;
+      body.set("video", capturedFile, capturedFile.name);
+    }
     const result = await action.run(() => submitAction("analyzer", body));
     if (result?.ok) {
-      setUploading(false);
+      closeUpload();
       if (result.redirect) {
         navigate(result.redirect);
         await query.reload();
@@ -104,10 +141,7 @@ export function AnalyzerPage() {
   return (
     <div className="page page--wide">
       <div className="page-header__actions page-actions">
-        <button
-          className="button button--primary"
-          onClick={() => setUploading(true)}
-        >
+        <button className="button button--primary" onClick={openUpload}>
           <Icon name="upload" size={17} />
           Upload and analyze
         </button>
@@ -292,7 +326,7 @@ export function AnalyzerPage() {
                 action={
                   <button
                     className="button button--primary"
-                    onClick={() => setUploading(true)}
+                    onClick={openUpload}
                   >
                     Upload footage
                   </button>
@@ -371,7 +405,7 @@ export function AnalyzerPage() {
         notice={action.notice}
         fields={action.fields}
         open={uploading}
-        onClose={() => setUploading(false)}
+        onClose={closeUpload}
         title="Upload and analyze"
         copy="Add survey footage and enough route context for engineering review."
         wide
@@ -382,16 +416,53 @@ export function AnalyzerPage() {
             <select
               name="source_type"
               value={sourceType}
-              onChange={(event) => setSourceType(event.target.value)}
+              disabled={action.pending}
+              onChange={(event) => {
+                setSourceType(event.target.value);
+                setCapturedFile(null);
+              }}
             >
               <option value="upload">Upload video file</option>
-              <option value="live-stream">Live RTSP / HTTP stream</option>
+              <option value="live-stream">
+                Stream URL (RTSP / HTTP / HTTPS)
+              </option>
+              <option value="dashcam">Dashcam</option>
+              <option value="laptop">Laptop camera</option>
+              <option value="mobile">Mobile camera</option>
             </select>
           </label>
-          {sourceType === "upload" ? (
+          {sourceType === "dashcam" && (
+            <label>
+              Dashcam input
+              <select
+                value={dashcamInput}
+                disabled={action.pending}
+                onChange={(event) => {
+                  setDashcamInput(event.target.value);
+                  setCapturedFile(null);
+                }}
+              >
+                <option value="file">Upload dashcam clip</option>
+                <option value="stream">Stream URL</option>
+                <option value="camera">Connected USB camera</option>
+              </select>
+            </label>
+          )}
+          {useCamera ? (
+            <CameraCapture
+              key={`${sourceType}-${dashcamInput}`}
+              kind={sourceType}
+              onChange={setCapturedFile}
+              disabled={action.pending}
+            />
+          ) : !useStream ? (
             <div className="upload-drop">
               <Icon name="upload" size={28} />
-              <strong>Select road survey footage</strong>
+              <strong>
+                {sourceType === "dashcam"
+                  ? "Select dashcam footage"
+                  : "Select road survey footage"}
+              </strong>
               <p>MP4, MOV, AVI, MKV, or WebM</p>
               <input
                 type="file"
@@ -473,13 +544,14 @@ export function AnalyzerPage() {
             <button
               type="button"
               className="button button--secondary"
-              onClick={() => setUploading(false)}
+              onClick={closeUpload}
+              disabled={action.pending}
             >
               Cancel
             </button>
             <button
               className="button button--primary"
-              disabled={action.pending}
+              disabled={action.pending || (useCamera && !capturedFile)}
             >
               {action.pending ? "Starting…" : "Start analysis"}
             </button>

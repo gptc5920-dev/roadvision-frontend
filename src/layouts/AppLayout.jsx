@@ -49,10 +49,6 @@ export function AppLayout() {
   );
   const navRef = useRef(null);
   const menuRef = useRef(null);
-  const currentPage =
-    [...primaryNav, ...managementNav].find(
-      ([path]) => location.pathname === `/app/${path}`,
-    )?.[1] || "Operations";
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem("rv-nav-collapsed") === "true",
   );
@@ -172,10 +168,6 @@ export function AppLayout() {
           >
             <Icon name="menu" />
           </button>
-          <div className="app-header__location">
-            <span>Workspace</span>
-            <strong>{currentPage}</strong>
-          </div>
           <PageSearch
             key={location.key}
             pages={[...primaryNav, ...managementNav]}

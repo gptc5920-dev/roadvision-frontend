@@ -15,13 +15,6 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
-.dashboard-brief__eyebrow {
-  color: var(--mint);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
 .dashboard-brief h2 {
   margin: 10px 0;
   font-family: var(--display);
