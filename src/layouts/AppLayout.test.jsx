@@ -35,6 +35,7 @@ function consoleView() {
         <Route path="/app" element={<AppLayout />}>
           <Route path="map" element={<h1>Map view</h1>} />
           <Route path="dashboard" element={<h1>Dashboard view</h1>} />
+          <Route path="reports" element={<h1>Reports view</h1>} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -42,6 +43,14 @@ function consoleView() {
 }
 
 describe("responsive navigation", () => {
+  it("opens the Reports module from the sidebar", async () => {
+    const user = userEvent.setup();
+    consoleView();
+    await user.click(screen.getByRole("button", { name: "Toggle navigation" }));
+    await user.click(screen.getByRole("link", { name: "Reports" }));
+    expect(screen.getByRole("heading", { name: "Reports view" })).toBeTruthy();
+  });
+
   it("closes the mobile drawer after logo navigation and restores scrolling and focus", async () => {
     const user = userEvent.setup();
     consoleView();

@@ -8,6 +8,7 @@ import { apiFetch, endpoints } from "../services/api";
 
 const primaryNav = [
   ["dashboard", "Dashboard", "dashboard"],
+  ["reports", "Reports", "report"],
   ["map", "Live map", "map"],
   ["detections", "Defect inventory", "alert"],
   ["fleet", "Fleet cameras", "camera"],

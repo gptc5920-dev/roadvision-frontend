@@ -12,6 +12,37 @@
   font-size: var(--text-small);
   font-weight: 600;
 }
+.reports-search,
+.reports-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.reports-search label {
+  display: grid;
+  flex: 1;
+  min-width: min(100%, 240px);
+  gap: 6px;
+  font-size: var(--text-small);
+  font-weight: 700;
+}
+.reports-pagination {
+  align-items: center;
+  margin: 18px 0 0;
+}
+.reports-pagination > span {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: var(--text-small);
+}
+.report-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -1,4 +1,5 @@
 const paths = {
+  report: ["M6 3h9l4 4v14H6z", "M14 3v5h5", "M9 12h7", "M9 16h7"],
   dashboard: ["M4 4h6v7H4z", "M14 4h6v4h-6z", "M14 12h6v8h-6z", "M4 15h6v5H4z"],
   map: ["M9 18 3 21V6l6-3 6 3 6-3v15l-6 3-6-3Z", "M9 3v15", "M15 6v15"],
   alert: ["M12 3 2.5 20h19L12 3Z", "M12 9v5", "M12 17h.01"],

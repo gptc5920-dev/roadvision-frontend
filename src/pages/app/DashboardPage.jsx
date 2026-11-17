@@ -14,14 +14,6 @@ export function DashboardPage() {
   const { data, loading, error, reload } = useApi(endpoints.overview);
   return (
     <div className="page dashboard-page">
-      <div className="page-header__actions page-actions">
-        <Link className="button button--secondary" to="/app/map">
-          <Icon name="map" size={17} /> View live map
-        </Link>
-        <Link className="button button--primary" to="/app/analyzer">
-          <Icon name="upload" size={17} /> Analyze footage
-        </Link>
-      </div>
       {error ? (
         <ErrorBlock message={error} onRetry={reload} />
       ) : loading ? (

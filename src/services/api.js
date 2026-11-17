@@ -81,6 +81,7 @@ export const endpoints = {
   logout: "/api/auth/logout/",
   overview: "/api/overview/",
   reports: "/api/reports/",
+  reportRecords: "/api/reports/records/",
   fleet: "/api/fleet/",
   detections: "/api/detections/",
   analyzer: "/api/analyzer/",

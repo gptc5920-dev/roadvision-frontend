@@ -11,6 +11,7 @@ import { DetectionsPage } from "../pages/app/DetectionsPage";
 import { FleetPage } from "../pages/app/FleetPage";
 import { MapPage } from "../pages/app/MapPage";
 import { PersonnelPage } from "../pages/app/PersonnelPage";
+import { ReportsPage } from "../pages/app/ReportsPage";
 import { SettingsPage } from "../pages/app/SettingsPage";
 import { SourcesPage } from "../pages/app/SourcesPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
@@ -38,6 +39,7 @@ export function App() {
       <Route path="/app" element={<ProtectedApp />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="reports" element={<ReportsPage />} />
         <Route path="map" element={<MapPage />} />
         <Route path="detections" element={<DetectionsPage />} />
         <Route path="fleet" element={<FleetPage />} />
