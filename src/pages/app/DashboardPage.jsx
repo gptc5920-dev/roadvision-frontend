@@ -28,57 +28,6 @@ export function DashboardPage() {
         <LoadingBlock />
       ) : (
         <>
-          <section
-            className="dashboard-brief"
-            aria-labelledby="dashboard-brief-title"
-          >
-            <div className="dashboard-brief__copy">
-              <h2 id="dashboard-brief-title">
-                {data.metrics.unresolvedDefects > 0
-                  ? `${formatNumber(data.metrics.unresolvedDefects)} defects ready for review`
-                  : "A clearer view of every road."}
-              </h2>
-              <p>
-                {data.metrics.unresolvedDefects > 0
-                  ? "Review detection evidence and confirm defects to keep field response moving."
-                  : "Analyze survey footage, inspect detections, and coordinate your next field response."}
-              </p>
-              <Link
-                to={
-                  data.metrics.unresolvedDefects > 0
-                    ? "/app/detections"
-                    : "/app/analyzer"
-                }
-              >
-                {data.metrics.unresolvedDefects > 0
-                  ? "Review defect inventory"
-                  : "Start an analysis"}
-                <Icon name="arrow" size={18} />
-              </Link>
-            </div>
-            <div className="dashboard-brief__routes">
-              <Link to="/app/map">
-                <span>
-                  <Icon name="map" />
-                </span>
-                <div>
-                  <strong>Explore the network</strong>
-                  <small>Locate reports on the live map</small>
-                </div>
-                <Icon name="chevron" size={16} />
-              </Link>
-              <Link to="/app/detections">
-                <span>
-                  <Icon name="alert" />
-                </span>
-                <div>
-                  <strong>Review defect inventory</strong>
-                  <small>Inspect evidence and confirm road defects</small>
-                </div>
-                <Icon name="chevron" size={16} />
-              </Link>
-            </div>
-          </section>
           <section className="metric-grid">
             <MetricCard
               label="Open reports"

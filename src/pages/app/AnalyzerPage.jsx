@@ -365,7 +365,12 @@ export function AnalyzerPage() {
                   <div className="track-grid">
                     {selected.tracks.length ? (
                       selected.tracks.map((track) => (
-                        <article key={track.id}>
+                        <Link
+                          key={track.id}
+                          className="track-card"
+                          to={`/app/detections?analysis=${selected.id}&track=${track.id}`}
+                          aria-label={`Review ${track.code}`}
+                        >
                           <TrackPreview
                             key={`${track.snapshotFrameUrl}:${track.snapshotCropUrl}`}
                             track={track}
@@ -386,7 +391,7 @@ export function AnalyzerPage() {
                                 " · Estimated mask"}
                             </small>
                           </div>
-                        </article>
+                        </Link>
                       ))
                     ) : (
                       <EmptyState

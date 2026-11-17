@@ -422,9 +422,35 @@ function renderTrack(source, polygon, overrides = {}) {
   return render(
     <MemoryRouter initialEntries={["/app/analyzer?analysis=1"]}>
       <AnalyzerPage />
+      <CurrentSearch />
     </MemoryRouter>,
   );
 }
+
+describe("detected track navigation", () => {
+  it.each([true, false])(
+    "opens the exact defect review when a snapshot is available: %s",
+    (hasSnapshot) => {
+      renderTrack(
+        "none",
+        [],
+        hasSnapshot ? {} : { snapshotCropUrl: "", snapshotFrameUrl: "" },
+      );
+      const card = screen.getByRole("link", { name: "Review A1-P1" });
+      expect(card.getAttribute("href")).toBe(
+        "/app/detections?analysis=1&track=1",
+      );
+      fireEvent.click(
+        hasSnapshot
+          ? screen.getByAltText("Pothole detection crop")
+          : screen.getByText("Snapshot unavailable"),
+      );
+      expect(screen.getByTestId("current-search").textContent).toBe(
+        "?analysis=1&track=1",
+      );
+    },
+  );
+});
 
 describe("analyzer mask previews", () => {
   const polygon = [
