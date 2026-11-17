@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import {
-  PageHeader,
-  MetricCard,
-  Panel,
-  StatusBadge,
-} from "../../components/ui/Page";
+import { MetricCard, Panel, StatusBadge } from "../../components/ui/Page";
 import {
   ErrorBlock,
   LoadingBlock,
@@ -56,11 +51,6 @@ export function DetectionsPage() {
   }
   return (
     <div className="page">
-      <PageHeader
-        eyebrow="Review workflow"
-        title="Defect inventory"
-        copy="Confirm, measure, and resolve unique defects extracted from completed video analyses."
-      />
       <Notice notice={action.notice} onClose={() => action.setNotice(null)} />
       {query.error ? (
         <ErrorBlock message={query.error} onRetry={query.reload} />
